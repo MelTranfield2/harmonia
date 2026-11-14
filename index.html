@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Earth Jukebox: hear NASA's satellite view of our changing planet." />
+    <title>Earth Jukebox</title>
+  </head>
+  <body>
+    <a class="skip" href="#player">Skip to player</a>
+    <header class="site">
+      <h1>Earth Jukebox</h1>
+      <p>Hear NASA's satellite view of our changing planet. Pick a record, press play, and listen.</p>
+    </header>
+
+    <main>
+      <section aria-labelledby="records-h">
+        <h2 id="records-h" class="label">Choose a record</h2>
+        <div id="records" class="records"></div>
+      </section>
+
+      <section id="player" class="player" aria-labelledby="rec-title">
+        <h2 id="rec-title"></h2>
+        <p id="rec-story" class="story"></p>
+
+        <div class="stage-wrap">
+          <canvas id="stage" class="stage" tabindex="0" role="img" aria-label="Map"></canvas>
+          <div id="loading" class="loading" role="status">Loading NASA imagery…</div>
+        </div>
+
+        <div class="readout">
+          <span id="frame-label" class="frame-label"></span>
+          <span id="metric"></span>
+          <span id="change" class="change"></span>
+        </div>
+
+        <canvas id="trend" class="trend" width="720" height="80" aria-hidden="true"></canvas>
+        <p id="trend-text" class="trend-text"></p>
+
+        <div class="controls">
+          <button id="prev" type="button" aria-label="Previous frame" title="Previous frame ( [ )">⏮</button>
+          <button id="play" type="button" class="primary">Play</button>
+          <button id="next" type="button" aria-label="Next frame" title="Next frame ( ] )">⏭</button>
+          <label class="slider grow">
+            <span>Timeline</span>
+            <input id="timeline" type="range" min="0" max="0" value="0" />
+          </label>
+          <label class="slider">
+            <span>Speed</span>
+            <input id="speed" type="range" min="100" max="320" step="10" value="200" />
+          </label>
+        </div>
+
+        <div class="controls">
+          <button id="legend" type="button">Audio legend <kbd>L</kbd></button>
+          <button id="explore" type="button" aria-pressed="false">Explore by ear <kbd>E</kbd></button>
+          <button id="speak" type="button" aria-pressed="false">Speak aloud <kbd>S</kbd></button>
+          <button id="mute" type="button" aria-pressed="false">Mute <kbd>M</kbd></button>
+        </div>
+
+        <details class="help">
+          <summary>Keyboard shortcuts and how it sounds</summary>
+          <dl>
+            <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
+            <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next frame</dd>
+            <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Choose a record</dd>
+            <dt><kbd>L</kbd></dt><dd>Audio legend: what high, low and silent mean</dd>
+            <dt><kbd>E</kbd></dt><dd>Explore by ear, then use the arrow keys (hold <kbd>Shift</kbd> for small steps) or move the pointer over the map</dd>
+            <dt><kbd>S</kbd></dt><dd>Speak descriptions aloud (for listeners without a screen reader)</dd>
+            <dt><kbd>M</kbd></dt><dd>Mute</dd>
+          </dl>
+          <p>A needle sweeps each map from left to right. Each slice plays one note: its pitch is the value
+            in that slice and it comes from the left or right speaker to match the slice's position. A low
+            drone follows the summary number for the frame and gets rougher the further it moves from the first frame.
+            A soft drum marks each new frame.</p>
+        </details>
+      </section>
+
+      <div id="live" class="sr-only" role="status" aria-live="polite"></div>
+    </main>
+
+    <footer class="site">
+      Imagery: NASA Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).
+      Datasets: MERRA-2 (GMAO), SSMIS sea ice concentration (NSIDC), MODIS Terra NDVI.
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
