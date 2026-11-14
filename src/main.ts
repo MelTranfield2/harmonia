@@ -3,13 +3,52 @@ import * as Tone from "tone";
 import { analyzeHalves, buildChord, type Chord, type RegionAnalysis } from "./analysis";
 import { Harmonia } from "./sonify";
 
-// NASA example: Namib Desert (warm, right) meets the Atlantic Ocean (cold, left).
-// MODIS Terra true colour from NASA GIBS (free, no key, CORS enabled).
-const NASA_URL =
-  "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0" +
-  "&LAYERS=MODIS_Terra_CorrectedReflectance_TrueColor&STYLES=&CRS=EPSG:4326&BBOX=-28,8,-20,18" +
-  "&WIDTH=600&HEIGHT=480&FORMAT=image/jpeg&TIME=2024-05-10";
-const NASA_CAPTION = "NASA MODIS Terra, 10 May 2024: the Atlantic Ocean and clouds (left) meet the Namib Desert (right).";
+// NASA true-colour satellite images from GIBS (free, no key, CORS enabled).
+// Each one was checked by eye for clouds and satellite gaps before being added.
+interface Scene {
+  title: string;
+  caption: string;
+  satellite: "MODIS_Terra" | "VIIRS_SNPP" | "VIIRS_NOAA20";
+  /** south, west, north, east in degrees */
+  bbox: [number, number, number, number];
+  width: number;
+  height: number;
+  date: string;
+}
+
+const SATELLITE_NAMES = { MODIS_Terra: "MODIS Terra", VIIRS_SNPP: "VIIRS Suomi NPP", VIIRS_NOAA20: "VIIRS NOAA-20" };
+
+const SCENES: Scene[] = [
+  { title: "Namib coast", caption: "The Atlantic Ocean and clouds (left) meet the Namib Desert (right).",
+    satellite: "MODIS_Terra", bbox: [-28, 8, -20, 18], width: 600, height: 480, date: "2024-05-10" },
+  { title: "Sahara", caption: "Sand seas and rocky plateaus of the central Sahara, Algeria and Libya.",
+    satellite: "MODIS_Terra", bbox: [20, 0, 30, 20], width: 640, height: 320, date: "2024-06-15" },
+  { title: "Australian Outback", caption: "Red desert of central Australia, with clouds at the edges.",
+    satellite: "VIIRS_NOAA20", bbox: [-30, 125, -20, 140], width: 600, height: 400, date: "2024-06-01" },
+  { title: "Amazon", caption: "Rainforest and rivers of the central Amazon, Brazil, in the dry season.",
+    satellite: "VIIRS_SNPP", bbox: [-6, -66, 0, -54], width: 640, height: 320, date: "2024-08-20" },
+  { title: "Bahamas", caption: "Turquoise shallow banks of the Bahamas against the deep blue Atlantic.",
+    satellite: "VIIRS_SNPP", bbox: [22, -80, 27, -75], width: 480, height: 480, date: "2024-03-10" },
+  { title: "Hurricane Milton", caption: "Hurricane Milton in the Gulf of Mexico, with Florida at the top and Cuba at the bottom right.",
+    satellite: "VIIRS_SNPP", bbox: [18, -95, 30, -80], width: 600, height: 480, date: "2024-10-08" },
+  { title: "Greenland", caption: "The Greenland ice sheet in summer, with dark open sea around its coasts.",
+    satellite: "MODIS_Terra", bbox: [60, -60, 80, -20], width: 480, height: 480, date: "2024-07-20" },
+];
+
+function sceneUrl(s: Scene): string {
+  const p = new URLSearchParams({
+    SERVICE: "WMS", REQUEST: "GetMap", VERSION: "1.3.0",
+    LAYERS: `${s.satellite}_CorrectedReflectance_TrueColor`, STYLES: "", CRS: "EPSG:4326",
+    BBOX: s.bbox.join(","), WIDTH: String(s.width), HEIGHT: String(s.height),
+    FORMAT: "image/jpeg", TIME: s.date,
+  });
+  return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?${p}`;
+}
+
+function sceneCaption(s: Scene): string {
+  const d = new Date(`${s.date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  return `${s.title}: ${s.caption} NASA ${SATELLITE_NAMES[s.satellite]}, ${d}.`;
+}
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $<HTMLCanvasElement>("stage");
@@ -39,20 +78,41 @@ async function showImage(source: ImageBitmap, caption: string) {
   analyse();
 }
 
-async function loadNasa() {
-  status.textContent = "Loading NASA image…";
+let loadToken = 0;
+async function loadScene(i: number) {
+  const scene = SCENES[i];
+  const token = ++loadToken;
+  renderScenePicker(i);
+  status.textContent = `Loading ${scene.title}…`;
   try {
-    const res = await fetch(NASA_URL);
+    const res = await fetch(sceneUrl(scene));
     if (!res.ok || !(res.headers.get("content-type") ?? "").startsWith("image/")) throw new Error(String(res.status));
-    await showImage(await createImageBitmap(await res.blob()), NASA_CAPTION);
+    const bitmap = await createImageBitmap(await res.blob());
+    if (token !== loadToken) return; // another scene was picked meanwhile
+    await showImage(bitmap, sceneCaption(scene));
     status.textContent = "";
   } catch {
-    status.textContent = "Couldn't load the NASA image. Try uploading one instead.";
+    if (token === loadToken) status.textContent = "Couldn't load the NASA image. Try another one, or upload your own.";
   }
+}
+
+function renderScenePicker(selected: number | null) {
+  const box = $("scenes");
+  box.innerHTML = "";
+  SCENES.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = s.title;
+    b.setAttribute("aria-pressed", String(i === selected));
+    b.addEventListener("click", () => void loadScene(i));
+    box.append(b);
+  });
 }
 
 async function loadFile(file: File) {
   if (!file.type.startsWith("image/")) return;
+  loadToken++;
+  renderScenePicker(null);
   try {
     await showImage(await createImageBitmap(file), `Your image: ${file.name}`);
     status.textContent = "";
@@ -122,7 +182,6 @@ async function togglePlay() {
 }
 
 playBtn.addEventListener("click", () => void togglePlay());
-$("nasa").addEventListener("click", () => void loadNasa());
 $<HTMLInputElement>("file").addEventListener("change", (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (f) void loadFile(f);
@@ -149,4 +208,4 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-void loadNasa();
+void loadScene(0);

@@ -43,6 +43,11 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .upload input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+.picker { margin: 0 0 16px; }
+.picker h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; }
+.scenes { display: flex; flex-wrap: wrap; gap: 8px; }
+.scenes button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
 .halves { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 640px) { .halves { grid-template-columns: 1fr; } }
 .half { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }

@@ -28,8 +28,12 @@
           <input id="file" type="file" accept="image/*" />
           <span>Upload an image</span>
         </label>
-        <button id="nasa" type="button">NASA example</button>
       </div>
+
+      <section class="picker" aria-labelledby="scenes-h">
+        <h2 id="scenes-h">NASA satellite images</h2>
+        <div id="scenes" class="scenes"></div>
+      </section>
 
       <div class="halves">
         <section class="half" aria-labelledby="left-h">
@@ -58,7 +62,7 @@
     </main>
 
     <footer class="site">
-      NASA example: Namib Desert and Atlantic coast, MODIS Terra true colour, 10 May 2024, via NASA GIBS.
+      Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>

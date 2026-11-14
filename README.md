@@ -33,7 +33,7 @@ npm test
 npm run build   # static site in dist/
 ```
 
-The NASA example is the Namib Desert meeting the Atlantic (MODIS Terra true colour, 10 May 2024), loaded live from
+Seven NASA true-colour satellite images are built in (Namib coast, Sahara, Australian Outback, Amazon, Bahamas, Hurricane Milton, Greenland), loaded live from
 [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) with no API key. You can also drag and drop your own image onto the page.
 
 ## Code
