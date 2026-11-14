@@ -3,13 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Harmonia: hear the colours of a NASA satellite image." />
+    <meta name="description" content="Harmonia: hear the colours of a NASA satellite image. / Ouça as cores de uma imagem de satélite da NASA." />
     <title>Harmonia</title>
   </head>
   <body>
     <header class="site">
-      <h1>Harmonia</h1>
-      <p>Hear the colours of our planet. The image is split down the middle: the left half plays in your left ear, the right half in your right.</p>
+      <div class="title-row">
+        <h1>Harmonia</h1>
+        <div class="lang" role="group" aria-label="Language" data-i18n-label="langGroup">
+          <button type="button" data-lang="en" aria-pressed="true" lang="en">English</button>
+          <button type="button" data-lang="pt" aria-pressed="false" lang="pt-BR">Português</button>
+        </div>
+      </div>
+      <p data-i18n="tagline">Hear the colours of our planet. The image is split down the middle: the left half plays in your left ear, the right half in your right.</p>
     </header>
 
     <main>
@@ -18,7 +24,7 @@
         <div id="flash-left" class="flash left" aria-hidden="true"></div>
         <div id="flash-right" class="flash right" aria-hidden="true"></div>
         <div class="divider" aria-hidden="true"></div>
-        <p id="status" class="status" role="status">Loading NASA image…</p>
+        <p id="status" class="status" role="status"></p>
       </div>
       <p id="caption" class="caption"></p>
 
@@ -26,42 +32,42 @@
         <button id="play" type="button" class="primary">Play</button>
         <label class="upload">
           <input id="file" type="file" accept="image/*" />
-          <span>Upload an image</span>
+          <span data-i18n="upload">Upload an image</span>
         </label>
       </div>
 
       <section class="picker" aria-labelledby="scenes-h">
-        <h2 id="scenes-h">NASA satellite images</h2>
+        <h2 id="scenes-h" data-i18n="scenesHeading">NASA satellite images</h2>
         <div id="scenes" class="scenes"></div>
       </section>
 
       <div class="halves">
         <section class="half" aria-labelledby="left-h">
-          <h2 id="left-h">Left half <span class="ear">◀ left ear</span></h2>
+          <h2 id="left-h"><span data-i18n="leftHalf">Left half</span> <span class="ear" data-i18n="leftEar">◀ left ear</span></h2>
           <p class="chord" id="left-chord">–</p>
           <div id="left-meters"></div>
         </section>
         <section class="half" aria-labelledby="right-h">
-          <h2 id="right-h">Right half <span class="ear">right ear ▶</span></h2>
+          <h2 id="right-h"><span data-i18n="rightHalf">Right half</span> <span class="ear" data-i18n="rightEar">right ear ▶</span></h2>
           <p class="chord" id="right-chord">–</p>
           <div id="right-meters"></div>
         </section>
       </div>
 
       <section class="rules" aria-labelledby="rules-h">
-        <h2 id="rules-h">How the image becomes sound</h2>
+        <h2 id="rules-h" data-i18n="rulesHeading">How the image becomes sound</h2>
         <ul>
-          <li><b>Brighter image</b> → more treble: higher notes and a brighter tone.</li>
-          <li><b>Colours close together</b> → more harmonic: a plain chord. Varied colours add extra notes, and very mixed colours clash.</li>
-          <li><b>Warm colours</b> (red, orange, yellow) → major chord. <b>Cold colours</b> (blue, cyan) → minor chord.</li>
-          <li><b>Left / right</b> → each half of the image plays in its own speaker.</li>
+          <li data-i18n-html="rule1"></li>
+          <li data-i18n-html="rule2"></li>
+          <li data-i18n-html="rule3"></li>
+          <li data-i18n-html="rule4"></li>
         </ul>
       </section>
 
       <div id="live" class="sr-only" aria-live="polite"></div>
     </main>
 
-    <footer class="site">
+    <footer class="site" data-i18n="footer">
       Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).
     </footer>
     <script type="module" src="/src/main.ts"></script>

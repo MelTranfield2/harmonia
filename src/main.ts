@@ -1,13 +1,13 @@
 import "./style.css";
 import * as Tone from "tone";
 import { analyzeHalves, buildChord, type Chord, type RegionAnalysis } from "./analysis";
+import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
 import { Harmonia } from "./sonify";
 
 // NASA true-colour satellite images from GIBS (free, no key, CORS enabled).
 // Each one was checked by eye for clouds and satellite gaps before being added.
+// Titles and captions live in i18n.ts (SCENE_TEXT), in the same order.
 interface Scene {
-  title: string;
-  caption: string;
   satellite: "MODIS_Terra" | "VIIRS_SNPP" | "VIIRS_NOAA20";
   /** south, west, north, east in degrees */
   bbox: [number, number, number, number];
@@ -19,20 +19,13 @@ interface Scene {
 const SATELLITE_NAMES = { MODIS_Terra: "MODIS Terra", VIIRS_SNPP: "VIIRS Suomi NPP", VIIRS_NOAA20: "VIIRS NOAA-20" };
 
 const SCENES: Scene[] = [
-  { title: "Namib coast", caption: "The Atlantic Ocean and clouds (left) meet the Namib Desert (right).",
-    satellite: "MODIS_Terra", bbox: [-28, 8, -20, 18], width: 600, height: 480, date: "2024-05-10" },
-  { title: "Sahara", caption: "Sand seas and rocky plateaus of the central Sahara, Algeria and Libya.",
-    satellite: "MODIS_Terra", bbox: [20, 0, 30, 20], width: 640, height: 320, date: "2024-06-15" },
-  { title: "Australian Outback", caption: "Red desert of central Australia, with clouds at the edges.",
-    satellite: "VIIRS_NOAA20", bbox: [-30, 125, -20, 140], width: 600, height: 400, date: "2024-06-01" },
-  { title: "Amazon", caption: "Rainforest and rivers of the central Amazon, Brazil, in the dry season.",
-    satellite: "VIIRS_SNPP", bbox: [-6, -66, 0, -54], width: 640, height: 320, date: "2024-08-20" },
-  { title: "Bahamas", caption: "Turquoise shallow banks of the Bahamas against the deep blue Atlantic.",
-    satellite: "VIIRS_SNPP", bbox: [22, -80, 27, -75], width: 480, height: 480, date: "2024-03-10" },
-  { title: "Hurricane Milton", caption: "Hurricane Milton in the Gulf of Mexico, with Florida at the top and Cuba at the bottom right.",
-    satellite: "VIIRS_SNPP", bbox: [18, -95, 30, -80], width: 600, height: 480, date: "2024-10-08" },
-  { title: "Greenland", caption: "The Greenland ice sheet in summer, with dark open sea around its coasts.",
-    satellite: "MODIS_Terra", bbox: [60, -60, 80, -20], width: 480, height: 480, date: "2024-07-20" },
+  { satellite: "MODIS_Terra", bbox: [-28, 8, -20, 18], width: 600, height: 480, date: "2024-05-10" }, // Namib coast
+  { satellite: "MODIS_Terra", bbox: [20, 0, 30, 20], width: 640, height: 320, date: "2024-06-15" }, // Sahara
+  { satellite: "VIIRS_NOAA20", bbox: [-30, 125, -20, 140], width: 600, height: 400, date: "2024-06-01" }, // Australia
+  { satellite: "VIIRS_SNPP", bbox: [-6, -66, 0, -54], width: 640, height: 320, date: "2024-08-20" }, // Amazon
+  { satellite: "VIIRS_SNPP", bbox: [22, -80, 27, -75], width: 480, height: 480, date: "2024-03-10" }, // Bahamas
+  { satellite: "VIIRS_SNPP", bbox: [18, -95, 30, -80], width: 600, height: 480, date: "2024-10-08" }, // Milton
+  { satellite: "MODIS_Terra", bbox: [60, -60, 80, -20], width: 480, height: 480, date: "2024-07-20" }, // Greenland
 ];
 
 function sceneUrl(s: Scene): string {
@@ -45,11 +38,19 @@ function sceneUrl(s: Scene): string {
   return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?${p}`;
 }
 
-function sceneCaption(s: Scene): string {
-  const d = new Date(`${s.date}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-  return `${s.title}: ${s.caption} NASA ${SATELLITE_NAMES[s.satellite]}, ${d}.`;
+// ---------- language ----------
+let lang: Lang = initialLang();
+const T = () => STRINGS[lang];
+
+function sceneCaption(i: number): string {
+  const s = SCENES[i], text = SCENE_TEXT[lang][i];
+  const d = new Date(`${s.date}T12:00:00Z`).toLocaleDateString(T().dateLocale, {
+    day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+  });
+  return `${text.title}: ${text.caption} NASA ${SATELLITE_NAMES[s.satellite]}, ${d}.`;
 }
 
+// ---------- elements and state ----------
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $<HTMLCanvasElement>("stage");
 const ctx = stage.getContext("2d", { willReadFrequently: true })!;
@@ -60,50 +61,74 @@ const live = $("live");
 const engine = new Harmonia();
 let playing = false;
 let chords: { left: Chord; right: Chord } | null = null;
+let halves: { left: RegionAnalysis; right: RegionAnalysis } | null = null;
+/** what is on screen, so captions can be re-translated */
+let source: { kind: "scene"; index: number } | { kind: "file"; name: string } | null = null;
+/** what the status line is showing, so it can be re-translated */
+let statusKey: { kind: "loading"; index: number } | { kind: "loadError" | "fileError" } | null = null;
 
 function announce(text: string) {
   live.textContent = "";
   requestAnimationFrame(() => (live.textContent = text));
 }
 
+function setStatus(key: typeof statusKey) {
+  statusKey = key;
+  renderStatus();
+}
+
+function renderStatus() {
+  if (!statusKey) status.textContent = "";
+  else if (statusKey.kind === "loading") status.textContent = T().loading(SCENE_TEXT[lang][statusKey.index].title);
+  else status.textContent = T()[statusKey.kind];
+}
+
 // ---------- image loading ----------
-async function showImage(source: ImageBitmap, caption: string) {
+function showImage(img: ImageBitmap) {
   const maxW = 960;
-  const scale = Math.min(1, maxW / source.width);
-  stage.width = Math.round(source.width * scale);
-  stage.height = Math.round(source.height * scale);
-  ctx.drawImage(source, 0, 0, stage.width, stage.height);
-  $("caption").textContent = caption;
-  stage.setAttribute("aria-label", caption);
+  const scale = Math.min(1, maxW / img.width);
+  stage.width = Math.round(img.width * scale);
+  stage.height = Math.round(img.height * scale);
+  ctx.drawImage(img, 0, 0, stage.width, stage.height);
+  renderCaption();
   analyse();
 }
 
+function renderCaption() {
+  const text = !source ? "" : source.kind === "scene" ? sceneCaption(source.index) : T().yourImage(source.name);
+  $("caption").textContent = text;
+  stage.setAttribute("aria-label", text || T().imageAlt);
+}
+
 let loadToken = 0;
+let selectedScene: number | null = 0;
+
 async function loadScene(i: number) {
-  const scene = SCENES[i];
   const token = ++loadToken;
-  renderScenePicker(i);
-  status.textContent = `Loading ${scene.title}…`;
+  selectedScene = i;
+  renderScenePicker();
+  setStatus({ kind: "loading", index: i });
   try {
-    const res = await fetch(sceneUrl(scene));
+    const res = await fetch(sceneUrl(SCENES[i]));
     if (!res.ok || !(res.headers.get("content-type") ?? "").startsWith("image/")) throw new Error(String(res.status));
     const bitmap = await createImageBitmap(await res.blob());
-    if (token !== loadToken) return; // another scene was picked meanwhile
-    await showImage(bitmap, sceneCaption(scene));
-    status.textContent = "";
+    if (token !== loadToken) return; // another image was picked meanwhile
+    source = { kind: "scene", index: i };
+    showImage(bitmap);
+    setStatus(null);
   } catch {
-    if (token === loadToken) status.textContent = "Couldn't load the NASA image. Try another one, or upload your own.";
+    if (token === loadToken) setStatus({ kind: "loadError" });
   }
 }
 
-function renderScenePicker(selected: number | null) {
+function renderScenePicker() {
   const box = $("scenes");
   box.innerHTML = "";
-  SCENES.forEach((s, i) => {
+  SCENE_TEXT[lang].forEach((s, i) => {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = s.title;
-    b.setAttribute("aria-pressed", String(i === selected));
+    b.setAttribute("aria-pressed", String(i === selectedScene));
     b.addEventListener("click", () => void loadScene(i));
     box.append(b);
   });
@@ -112,36 +137,43 @@ function renderScenePicker(selected: number | null) {
 async function loadFile(file: File) {
   if (!file.type.startsWith("image/")) return;
   loadToken++;
-  renderScenePicker(null);
+  selectedScene = null;
+  renderScenePicker();
   try {
-    await showImage(await createImageBitmap(file), `Your image: ${file.name}`);
-    status.textContent = "";
+    const bitmap = await createImageBitmap(file);
+    source = { kind: "file", name: file.name };
+    showImage(bitmap);
+    setStatus(null);
   } catch {
-    status.textContent = "That file couldn't be read as an image.";
+    setStatus({ kind: "fileError" });
   }
 }
 
 // ---------- analysis -> chords -> UI ----------
 function analyse() {
   const { data, width, height } = ctx.getImageData(0, 0, stage.width, stage.height);
-  const halves = analyzeHalves(data, width, height);
+  halves = analyzeHalves(data, width, height);
   chords = { left: buildChord(halves.left), right: buildChord(halves.right) };
-  renderHalf("left", halves.left, chords.left);
-  renderHalf("right", halves.right, chords.right);
   engine.setChords(chords.left, chords.right);
-  announce(`Left half: ${describe(halves.left, chords.left)} Right half: ${describe(halves.right, chords.right)}`);
+  renderHalves();
+  announceHalves();
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
-const word = (v: number, lo: string, mid: string, hi: string) => (v < 0.35 ? lo : v < 0.65 ? mid : hi);
+const level = (v: number): 0 | 1 | 2 => (v < 0.35 ? 0 : v < 0.65 ? 1 : 2);
+const temperature = (a: RegionAnalysis): "warm" | "cold" | "neutral" =>
+  a.warmth > 0.15 ? "warm" : a.warmth < -0.15 ? "cold" : "neutral";
 
 function describe(a: RegionAnalysis, c: Chord): string {
-  const temp = a.warmth > 0.15 ? "warm" : a.warmth < -0.15 ? "cold" : "neutral";
-  return (
-    `${temp} colours, so ${c.name} ${c.quality}. ` +
-    `${word(a.brightness, "Dark", "Medium", "Bright")}, so ${word(a.brightness, "low", "middle", "high")} notes. ` +
-    `Colours ${word(a.similarity, "very varied", "fairly mixed", "close together")}, so ${word(a.similarity, "clashing", "rich", "harmonic")} sound.`
-  );
+  return T().describe({
+    temp: temperature(a), chord: c.name, quality: T().quality[c.quality],
+    bright: level(a.brightness), similar: level(a.similarity),
+  });
+}
+
+function announceHalves() {
+  if (!halves || !chords) return;
+  announce(T().halves(describe(halves.left, chords.left), describe(halves.right, chords.right)));
 }
 
 function meter(label: string, value: string, fill: number, extra = "") {
@@ -149,14 +181,44 @@ function meter(label: string, value: string, fill: number, extra = "") {
     `<div class="bar ${extra}" aria-hidden="true"><i style="width:${pct(fill)};left:${extra ? pct(fill) : "0"}"></i></div></div>`;
 }
 
-function renderHalf(side: "left" | "right", a: RegionAnalysis, c: Chord) {
-  $(`${side}-chord`).innerHTML = `${c.name}<span class="q ${c.quality}">${c.quality}</span>`;
-  const warmthLabel = a.warmth > 0.15 ? "warm → major" : a.warmth < -0.15 ? "cold → minor" : `neutral → ${c.quality}`;
-  $(`${side}-meters`).innerHTML =
-    meter("Brightness → treble", `${pct(a.brightness)} · ${word(a.brightness, "low", "mid", "high")}`, a.brightness) +
-    meter("Colour similarity → harmony", `${pct(a.similarity)} · ${word(a.similarity, "clashing", "rich", "harmonic")}`, a.similarity) +
-    meter("Cold ↔ warm → minor / major", warmthLabel, (a.warmth + 1) / 2, "warmth");
+function renderHalves() {
+  if (!halves || !chords) return;
+  for (const side of ["left", "right"] as const) {
+    const a = halves[side], c = chords[side], t = T();
+    const q = t.quality[c.quality];
+    $(`${side}-chord`).innerHTML = `${c.name}<span class="q ${c.quality}">${q}</span>`;
+    $(`${side}-meters`).innerHTML =
+      meter(t.meters.brightness, `${pct(a.brightness)} · ${t.brightnessWords[level(a.brightness)]}`, a.brightness) +
+      meter(t.meters.similarity, `${pct(a.similarity)} · ${t.similarityWords[level(a.similarity)]}`, a.similarity) +
+      meter(t.meters.warmth, t.warmthLabel(temperature(a), q), (a.warmth + 1) / 2, "warmth");
+  }
 }
+
+// ---------- page language ----------
+function applyLanguage(announceIt = false) {
+  const t = T();
+  document.documentElement.lang = t.htmlLang;
+  document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => (el.textContent = t.page[el.dataset.i18n!]));
+  document.querySelectorAll<HTMLElement>("[data-i18n-html]").forEach((el) => (el.innerHTML = t.page[el.dataset.i18nHtml!]));
+  document.querySelectorAll<HTMLElement>("[data-i18n-label]").forEach((el) => el.setAttribute("aria-label", t.page[el.dataset.i18nLabel!]));
+  document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  playBtn.textContent = playing ? t.stop : t.play;
+  renderScenePicker();
+  renderCaption();
+  renderStatus();
+  renderHalves();
+  if (announceIt) announce(t.switched);
+}
+
+document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) =>
+  b.addEventListener("click", () => {
+    const next = b.dataset.lang as Lang;
+    if (next === lang) return;
+    lang = next;
+    saveLang(lang);
+    applyLanguage(true);
+  }),
+);
 
 // ---------- playback ----------
 engine.onStep = (side, time) => {
@@ -171,14 +233,14 @@ async function togglePlay() {
   if (playing) {
     engine.stop();
     playing = false;
-    playBtn.textContent = "Play";
+    playBtn.textContent = T().play;
     return;
   }
   await engine.start();
   if (chords) engine.setChords(chords.left, chords.right);
   engine.play();
   playing = true;
-  playBtn.textContent = "Stop";
+  playBtn.textContent = T().stop;
 }
 
 playBtn.addEventListener("click", () => void togglePlay());
@@ -208,4 +270,5 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+applyLanguage();
 void loadScene(0);
