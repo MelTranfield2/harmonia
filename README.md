@@ -40,6 +40,8 @@ Seven NASA true-colour satellite images are built in (Namib coast, Sahara, Austr
 
 - `src/analysis.ts`: image → brightness, warmth, colour closeness → chord (pure functions, tested)
 - `src/sonify.ts`: Tone.js, with one voice per half, each panned left or right
+- `src/piano.ts`: piano keyboard (C2 to C7) showing both chords; left half low (octaves 2–3), right half high (octaves 4–5)
+- `src/i18n.ts`: English and Brazilian Portuguese text
 - `src/main.ts`: page, image loading, upload, meters
 
 ## License

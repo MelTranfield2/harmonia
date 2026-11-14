@@ -38,6 +38,12 @@ describe("mapping rules", () => {
       for (const q of ["major", "minor"] as const) expect(inKey).toContain(rootFromHue(hue, q));
   });
 
+  it("plays the left half in a lower octave than the right half", () => {
+    const a = analyzeRegion(image(10, 10, () => [250, 200, 150]), 10, 10, 0, 10);
+    const low = buildChord(a, "low"), high = buildChord(a, "high");
+    expect(Math.min(...high.notes) - Math.min(...low.notes)).toBe(24);
+  });
+
   it("brighter image -> higher notes and more treble", () => {
     const dark = analyzeRegion(image(10, 10, () => [40, 20, 10]), 10, 10, 0, 10);
     const bright = analyzeRegion(image(10, 10, () => [250, 200, 150]), 10, 10, 0, 10);

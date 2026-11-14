@@ -24,6 +24,7 @@ export interface Strings {
     temp: "warm" | "cold" | "neutral"; chord: string; quality: string; bright: 0 | 1 | 2; similar: 0 | 1 | 2;
   }) => string;
   halves: (left: string, right: string) => string;
+  pianoLabel: (left: string, right: string) => string;
   switched: string;
 }
 
@@ -46,6 +47,10 @@ export const STRINGS: Record<Lang, Strings> = {
       rule4: "<b>Left / right</b> → each half of the image plays in its own speaker.",
       footer: "Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).",
       langGroup: "Language",
+      pianoHeading: "The chords on a piano",
+      pianoLeft: "Left half: low (octaves 2–3)",
+      pianoRight: "Right half: high (octaves 4–5)",
+      pianoNote: "A brighter half moves up one octave. During playback, each key lights up as it is played.",
     },
     play: "Play",
     stop: "Stop",
@@ -68,6 +73,7 @@ export const STRINGS: Record<Lang, Strings> = {
       `${["Dark", "Medium", "Bright"][bright]}, so ${["low", "middle", "high"][bright]} notes. ` +
       `Colours ${["very varied", "fairly mixed", "close together"][similar]}, so ${["clashing", "rich", "harmonic"][similar]} sound.`,
     halves: (l, r) => `Left half: ${l} Right half: ${r}`,
+    pianoLabel: (l, r) => `Piano. Left half, low: ${l}. Right half, high: ${r}.`,
     switched: "Language: English.",
   },
   pt: {
@@ -88,6 +94,10 @@ export const STRINGS: Record<Lang, Strings> = {
       rule4: "<b>Esquerda / direita</b> → cada metade da imagem toca na sua própria caixa de som.",
       footer: "Imagens: cor verdadeira dos sensores MODIS e VIIRS da NASA, via NASA Global Imagery Browse Services (GIBS).",
       langGroup: "Idioma",
+      pianoHeading: "Os acordes no piano",
+      pianoLeft: "Metade esquerda: grave (oitavas 2–3)",
+      pianoRight: "Metade direita: aguda (oitavas 4–5)",
+      pianoNote: "Uma metade mais clara sobe uma oitava. Durante a música, cada tecla acende quando é tocada.",
     },
     play: "Tocar",
     stop: "Parar",
@@ -110,6 +120,7 @@ export const STRINGS: Record<Lang, Strings> = {
       `${["Escura", "Média", "Clara"][bright]}, então notas ${["graves", "médias", "agudas"][bright]}. ` +
       `Cores ${["muito variadas", "um pouco misturadas", "próximas"][similar]}, então som ${["dissonante", "rico", "harmônico"][similar]}.`,
     halves: (l, r) => `Metade esquerda: ${l} Metade direita: ${r}`,
+    pianoLabel: (l, r) => `Piano. Metade esquerda, grave: ${l}. Metade direita, aguda: ${r}.`,
     switched: "Idioma: português.",
   },
 };

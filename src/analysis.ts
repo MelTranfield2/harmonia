@@ -95,7 +95,7 @@ export function analyzeRegion(
 
 /** Splits the image down the middle and analyses each half. */
 export function analyzeHalves(data: Uint8ClampedArray, width: number, height: number) {
-  const mid = Math.floor(width / 2);
+  const mid = Math.floor(width / 2); // left half -> low zone, right half -> high zone
   return {
     left: analyzeRegion(data, width, height, 0, mid),
     right: analyzeRegion(data, width, height, mid, width),
@@ -122,11 +122,19 @@ export function rootFromHue(hue: number | null, quality: Quality): number {
   return A;
 }
 
-export function buildChord(a: RegionAnalysis): Chord {
+/**
+ * Each half gets its own octave zone so the two chords never sit on top of each other:
+ * the left half plays low (octaves 2-3) and the right half plays high (octaves 4-5).
+ * Inside its zone, a brighter half moves up an octave.
+ */
+export type Zone = "low" | "high";
+export const ZONE_OCTAVE: Record<Zone, number> = { low: 2, high: 4 };
+
+export function buildChord(a: RegionAnalysis, zone: Zone = "low"): Chord {
   const quality: Quality = a.warmth >= 0 ? "major" : "minor";
   const root = rootFromHue(a.hue, quality);
-  // brighter -> higher register: octave 3 (dark) .. octave 5 (bright)
-  const octave = 3 + Math.min(2, Math.floor(a.brightness * 3));
+  // brighter -> one octave higher inside the half's zone
+  const octave = ZONE_OCTAVE[zone] + (a.brightness >= 0.5 ? 1 : 0);
   const base = 12 * (octave + 1) + root;
   const third = quality === "major" ? 4 : 3;
   const intervals = [0, third, 7];

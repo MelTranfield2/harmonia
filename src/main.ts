@@ -2,6 +2,7 @@ import "./style.css";
 import * as Tone from "tone";
 import { analyzeHalves, buildChord, type Chord, type RegionAnalysis } from "./analysis";
 import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
+import { createPiano, noteName, pulseKey, showChords } from "./piano";
 import { Harmonia } from "./sonify";
 
 // NASA true-colour satellite images from GIBS (free, no key, CORS enabled).
@@ -153,9 +154,10 @@ async function loadFile(file: File) {
 function analyse() {
   const { data, width, height } = ctx.getImageData(0, 0, stage.width, stage.height);
   halves = analyzeHalves(data, width, height);
-  chords = { left: buildChord(halves.left), right: buildChord(halves.right) };
+  chords = { left: buildChord(halves.left, "low"), right: buildChord(halves.right, "high") };
   engine.setChords(chords.left, chords.right);
   renderHalves();
+  renderPiano();
   announceHalves();
 }
 
@@ -194,6 +196,16 @@ function renderHalves() {
   }
 }
 
+// ---------- piano ----------
+const piano = createPiano($("piano"));
+
+function renderPiano() {
+  if (!chords) return;
+  const names = (c: Chord) => c.notes.map(noteName).join(" ");
+  showChords(piano, chords.left.notes, chords.right.notes,
+    T().pianoLabel(`${chords.left.name} (${names(chords.left)})`, `${chords.right.name} (${names(chords.right)})`));
+}
+
 // ---------- page language ----------
 function applyLanguage(announceIt = false) {
   const t = T();
@@ -207,6 +219,7 @@ function applyLanguage(announceIt = false) {
   renderCaption();
   renderStatus();
   renderHalves();
+  renderPiano();
   if (announceIt) announce(t.switched);
 }
 
@@ -221,11 +234,12 @@ document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) =>
 );
 
 // ---------- playback ----------
-engine.onStep = (side, time) => {
+engine.onStep = (side, time, midi) => {
   Tone.getDraw().schedule(() => {
     const el = $(`flash-${side}`);
     el.classList.add("on");
     setTimeout(() => el.classList.remove("on"), 90);
+    pulseKey(piano, midi);
   }, time);
 };
 

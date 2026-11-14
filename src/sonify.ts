@@ -53,7 +53,7 @@ export class Harmonia {
   private loop?: Tone.Loop;
   private step = 0;
   /** called on each eighth note with which side is playing, for visuals */
-  onStep?: (side: "left" | "right", time: number) => void;
+  onStep?: (side: "left" | "right", time: number, midi: number) => void;
 
   async start() {
     if (this.started) return;
@@ -89,8 +89,9 @@ export class Harmonia {
     const notes = v.chord.notes;
     const idx = Math.floor(s / 2) % notes.length;
     const note = notes[(idx + (side === "right" ? 1 : 0)) % notes.length];
-    v.arp.triggerAttackRelease(midiToFreq(note + 12), "8n", time, 0.7);
-    this.onStep?.(side, time);
+    // play the chord note itself, so what you hear is exactly what the piano shows
+    v.arp.triggerAttackRelease(midiToFreq(note), "8n", time, 0.7);
+    this.onStep?.(side, time, note);
   }
 
   play() {
