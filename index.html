@@ -3,85 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Earth Jukebox: hear NASA's satellite view of our changing planet." />
-    <title>Earth Jukebox</title>
+    <meta name="description" content="Harmonia: hear the colours of a NASA satellite image." />
+    <title>Harmonia</title>
   </head>
   <body>
-    <a class="skip" href="#player">Skip to player</a>
     <header class="site">
-      <h1>Earth Jukebox</h1>
-      <p>Hear NASA's satellite view of our changing planet. Pick a record, press play, and listen.</p>
+      <h1>Harmonia</h1>
+      <p>Hear the colours of our planet. The image is split down the middle: the left half plays in your left ear, the right half in your right.</p>
     </header>
 
     <main>
-      <section aria-labelledby="records-h">
-        <h2 id="records-h" class="label">Choose a record</h2>
-        <div id="records" class="records"></div>
+      <div id="drop" class="stage-wrap">
+        <canvas id="stage" class="stage" role="img" aria-label="Image"></canvas>
+        <div id="flash-left" class="flash left" aria-hidden="true"></div>
+        <div id="flash-right" class="flash right" aria-hidden="true"></div>
+        <div class="divider" aria-hidden="true"></div>
+        <p id="status" class="status" role="status">Loading NASA image…</p>
+      </div>
+      <p id="caption" class="caption"></p>
+
+      <div class="controls">
+        <button id="play" type="button" class="primary">Play</button>
+        <label class="upload">
+          <input id="file" type="file" accept="image/*" />
+          <span>Upload an image</span>
+        </label>
+        <button id="nasa" type="button">NASA example</button>
+      </div>
+
+      <div class="halves">
+        <section class="half" aria-labelledby="left-h">
+          <h2 id="left-h">Left half <span class="ear">◀ left ear</span></h2>
+          <p class="chord" id="left-chord">–</p>
+          <div id="left-meters"></div>
+        </section>
+        <section class="half" aria-labelledby="right-h">
+          <h2 id="right-h">Right half <span class="ear">right ear ▶</span></h2>
+          <p class="chord" id="right-chord">–</p>
+          <div id="right-meters"></div>
+        </section>
+      </div>
+
+      <section class="rules" aria-labelledby="rules-h">
+        <h2 id="rules-h">How the image becomes sound</h2>
+        <ul>
+          <li><b>Brighter image</b> → more treble: higher notes and a brighter tone.</li>
+          <li><b>Colours close together</b> → more harmonic: a plain chord. Varied colours add extra notes, and very mixed colours clash.</li>
+          <li><b>Warm colours</b> (red, orange, yellow) → major chord. <b>Cold colours</b> (blue, cyan) → minor chord.</li>
+          <li><b>Left / right</b> → each half of the image plays in its own speaker.</li>
+        </ul>
       </section>
 
-      <section id="player" class="player" aria-labelledby="rec-title">
-        <h2 id="rec-title"></h2>
-        <p id="rec-story" class="story"></p>
-
-        <div class="stage-wrap">
-          <canvas id="stage" class="stage" tabindex="0" role="img" aria-label="Map"></canvas>
-          <div id="loading" class="loading" role="status">Loading NASA imagery…</div>
-        </div>
-
-        <div class="readout">
-          <span id="frame-label" class="frame-label"></span>
-          <span id="metric"></span>
-          <span id="change" class="change"></span>
-        </div>
-
-        <canvas id="trend" class="trend" width="720" height="80" aria-hidden="true"></canvas>
-        <p id="trend-text" class="trend-text"></p>
-
-        <div class="controls">
-          <button id="prev" type="button" aria-label="Previous frame" title="Previous frame ( [ )">⏮</button>
-          <button id="play" type="button" class="primary">Play</button>
-          <button id="next" type="button" aria-label="Next frame" title="Next frame ( ] )">⏭</button>
-          <label class="slider grow">
-            <span>Timeline</span>
-            <input id="timeline" type="range" min="0" max="0" value="0" />
-          </label>
-          <label class="slider">
-            <span>Speed</span>
-            <input id="speed" type="range" min="100" max="320" step="10" value="200" />
-          </label>
-        </div>
-
-        <div class="controls">
-          <button id="legend" type="button">Audio legend <kbd>L</kbd></button>
-          <button id="explore" type="button" aria-pressed="false">Explore by ear <kbd>E</kbd></button>
-          <button id="speak" type="button" aria-pressed="false">Speak aloud <kbd>S</kbd></button>
-          <button id="mute" type="button" aria-pressed="false">Mute <kbd>M</kbd></button>
-        </div>
-
-        <details class="help">
-          <summary>Keyboard shortcuts and how it sounds</summary>
-          <dl>
-            <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
-            <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next frame</dd>
-            <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Choose a record</dd>
-            <dt><kbd>L</kbd></dt><dd>Audio legend: what high, low and silent mean</dd>
-            <dt><kbd>E</kbd></dt><dd>Explore by ear, then use the arrow keys (hold <kbd>Shift</kbd> for small steps) or move the pointer over the map</dd>
-            <dt><kbd>S</kbd></dt><dd>Speak descriptions aloud (for listeners without a screen reader)</dd>
-            <dt><kbd>M</kbd></dt><dd>Mute</dd>
-          </dl>
-          <p>A needle sweeps each map from left to right. Each slice plays one note: its pitch is the value
-            in that slice and it comes from the left or right speaker to match the slice's position. A low
-            drone follows the summary number for the frame and gets rougher the further it moves from the first frame.
-            A soft drum marks each new frame.</p>
-        </details>
-      </section>
-
-      <div id="live" class="sr-only" role="status" aria-live="polite"></div>
+      <div id="live" class="sr-only" aria-live="polite"></div>
     </main>
 
     <footer class="site">
-      Imagery: NASA Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).
-      Datasets: MERRA-2 (GMAO), SSMIS sea ice concentration (NSIDC), MODIS Terra NDVI.
+      NASA example: Namib Desert and Atlantic coast, MODIS Terra true colour, 10 May 2024, via NASA GIBS.
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>

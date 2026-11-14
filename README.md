@@ -1,84 +1,46 @@
-# Harmonia · Earth Jukebox 🌍🎵
+# Harmonia 🌍🎵
 
-Hear NASA's satellite view of our changing planet. Pick a **record**, press play, and a needle sweeps
-each map from left to right, turning real NASA data into music in real time.
+Hear the colours of our planet. Harmonia turns a NASA satellite image (or any image you upload)
+into music. The image is split down the middle: the left half plays in your left ear and the right half in your right.
 
-| Record | NASA data | What you hear |
-|---|---|---|
-| **1. Planet Fever** | MERRA-2 air temperature, every July 1980 → 2025 | Hot places = high notes. The drone rises as the global average warms. |
-| **2. Vanishing Ice** | SSMIS sea ice, every September 1979 → 2020 | Bells where there's ice, silence over open water. The drone sinks as the ice shrinks (6.9 → 3.6 million km²). |
-| **3. Breathing Planet** | MODIS NDVI vegetation, every month of 2024 | Plucked notes over land (greener = higher), silent oceans. Hear the seasons. |
+*Ouça as cores do nosso planeta. O Harmonia transforma uma imagem de satélite da NASA (ou qualquer imagem que você enviar)
+em música. A imagem é dividida ao meio: a metade esquerda toca no ouvido esquerdo e a direita, no direito.*
 
-## Run it
+## Mapping / Mapeamento
+
+| Image / Imagem | Sound / Som |
+|---|---|
+| Brighter image / Imagem mais brilhante | More treble: higher notes, brighter tone / Mais agudos |
+| Colours close together / Cores próximas | More harmonic: plain chord. Mixed colours add notes, then clash / Mais harmônico |
+| Warm colours / Cores quentes | Major chord / Acorde maior |
+| Cold colours / Cores frias | Minor chord / Acorde menor |
+| Left / right half / Metade esquerda / direita | Left / right speaker / Caixa esquerda / direita |
+
+Details:
+- **Brightness** = average luminance → octave 3 to 5, plus a lowpass filter from ~500 Hz (dark) to ~11 kHz (bright).
+  Very bright halves also add the root an octave up.
+- **Colour closeness** = how tightly the hues cluster on the colour wheel. Greys and whites barely count, so clouds don't make the sea "clash".
+  Close colours → triad. Less close → adds 7th, then 9th, then a minor 2nd + tritone (clash), plus slight detune.
+- **Warm/cold**: reds, oranges, yellows and magentas count as warm; cyans, blues and indigos as cold; greens and violets as slightly cool.
+- **Roots** come from the dominant hue but always stay in one key (C major / A minor), so the two halves blend.
+
+## Run / Rodar
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm test           # unit tests for the data maths
-npm run build      # static site in dist/ (deploy to Cloudflare Pages, Vercel, GitHub Pages…)
+npm run dev     # http://localhost:5173
+npm test
+npm run build   # static site in dist/
 ```
 
-No API keys and no backend: images come straight from NASA GIBS, which allows browser access (CORS).
+The NASA example is the Namib Desert meeting the Atlantic (MODIS Terra true colour, 10 May 2024), loaded live from
+[NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) with no API key. You can also drag and drop your own image onto the page.
 
-## How it works
+## Code
 
-```
-NASA GIBS (WMS image for one date)
-   → canvas pixels
-   → GIBS colormap XML: colour → real value (°C, % ice, NDVI)   src/colormap.ts
-   → maths: 32 needle slices + one summary number per frame     src/analysis.ts
-   → Tone.js: notes, pan, drone, roughness                      src/sonify.ts
-   → UI, keyboard, screen-reader narration                      src/main.ts
-```
-
-### Sonification mapping
-
-| Data | Sound |
-|---|---|
-| Value of each needle slice | Pitch (C pentatonic, 3 octaves) |
-| Horizontal position | Stereo pan, left → right |
-| Data coverage / amount of ice | Loudness |
-| No data (ocean for NDVI, open water for ice) | Silence |
-| Frame summary vs first frame | Drone pitch (±7 semitones) and distortion ("roughness") |
-| New frame (year/month) | Soft drum beat |
-
-### Scientific notes
-- Every value is decoded from GIBS's official colormap, not guessed from the colours.
-- Global averages are **area-weighted** by cos(latitude), because a lat/lon pixel near the pole covers less area.
-- Sea ice extent uses the standard **15 % concentration** threshold. The satellite "pole hole" counts as ice,
-  as NSIDC does, because it shrank in 1987 and would otherwise distort the trend.
-- Values are quantised by the colormap (e.g. 1 K bins for temperature), so treat them as good approximations.
-
-## Accessibility
-- Everything works by keyboard: <kbd>Space</kbd> play/pause, <kbd>[</kbd> <kbd>]</kbd> frames,
-  <kbd>1</kbd>–<kbd>3</kbd> records, <kbd>L</kbd> audio legend, <kbd>E</kbd> explore by ear
-  (then arrow keys, <kbd>Shift</kbd> for small steps), <kbd>S</kbd> speak aloud, <kbd>M</kbd> mute.
-- Screen readers hear each frame's numbers through a live region. The map's `aria-label` always describes the current frame.
-- **Audio legend** explains what high, low, silence and the drone mean before you listen.
-- **Explore by ear**: move around the map and hear the value, plus place and value read out.
-- **Speak aloud** uses the browser's speech for listeners without a screen reader.
-- Respects reduced-motion settings. All controls are at least 44 px tall, with visible focus outlines.
-
-## Adding a record (≈ 20 minutes)
-1. Find a layer in [NASA Worldview](https://worldview.earthdata.nasa.gov) and note its layer ID (the "i" info panel).
-2. Find its colormap name in the [GIBS WMTS capabilities](https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/1.0.0/WMTSCapabilities.xml)
-   (search the layer ID, then look for `colormaps/v1.3/<name>.xml`).
-3. Check the dates the layer has (its `<Dimension>` / `<Value>` entries), then copy a block in `src/records.ts`.
-4. Tune `pointRange`, `columnRange` and `changeScale` by ear.
-
-Good next candidates: `GHRSST_L4_MUR_Sea_Surface_Temperature` (El Niño), `MERRA2_*` CO / aerosol layers, fire layers.
-
-## Ideas for the rest of the hackathon
-- Compare two years: 1990 in the left ear, 2024 in the right.
-- Export a sonification as `.wav` (Tone.Recorder) or MIDI.
-- Category instruments (land/ocean/ice) and a richer second voice for the rows (latitude bands).
-- Phone vibration on big anomalies (`navigator.vibrate`).
-- Test with blind and low-vision listeners and put their quotes in the pitch.
-
-## Credits
-Imagery: NASA Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).
-Datasets: MERRA-2 (NASA GMAO), SSMIS/SSM/I sea ice concentration (NSIDC), MODIS Terra NDVI (NASA LP DAAC).
-Audio: [Tone.js](https://tonejs.github.io).
+- `src/analysis.ts`: image → brightness, warmth, colour closeness → chord (pure functions, tested)
+- `src/sonify.ts`: Tone.js, with one voice per half, each panned left or right
+- `src/main.ts`: page, image loading, upload, meters
 
 ## License
 Apache 2.0, see [LICENSE](LICENSE).

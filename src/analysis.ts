@@ -1,141 +1,157 @@
-// Pure maths on a decoded image: no DOM, no audio. Easy to unit-test.
-import type { BBox, Projection } from "./gibs";
+// Image patterns -> sound patterns. Pure functions (no DOM, no audio) so they are easy to test.
+//
+// Mapping rules (from the team's sketch):
+//   brighter image            -> more treble (higher register, brighter filter)
+//   colours close together    -> more harmonic (plain triad); varied colours -> extra/dissonant notes
+//   warm colours              -> major chord; cold colours -> minor chord
+//   image split in half       -> left half plays in the left speaker, right half in the right
 
-export interface Grid {
-  width: number;
-  height: number;
-  /** one value per pixel, row-major, NaN = no data */
-  values: Float32Array;
+export type Quality = "major" | "minor";
+
+export interface RegionAnalysis {
+  /** 0..1 average luminance */
+  brightness: number;
+  /** -1 (all cold colours) .. +1 (all warm colours) */
+  warmth: number;
+  /** 0..1, 1 = colours very close to each other */
+  similarity: number;
+  /** dominant hue in degrees, or null if the region is almost grey */
+  hue: number | null;
 }
 
-export type Metric =
-  /** area-weighted average of every valid pixel (e.g. temperature) */
-  | { kind: "mean" }
-  /** area covered by pixels >= threshold (e.g. sea ice extent, >= 15 % concentration) */
-  | { kind: "extent"; threshold: number };
+export interface Chord {
+  name: string;
+  quality: Quality;
+  /** MIDI note numbers, low to high */
+  notes: number[];
+  /** lowpass cutoff in Hz: brighter image -> more treble */
+  cutoff: number;
+  /** 0..1, used for detune/roughness */
+  dissonance: number;
+}
 
-export interface Column {
-  /** aggregated value of the column, or null when the column has no data (silence) */
-  value: number | null;
-  /** 0..1, share of the column with valid data (used as loudness) */
-  coverage: number;
+const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+
+/** RGB 0..255 -> hue (deg), chroma 0..1, luminance 0..1 */
+export function pixelInfo(r: number, g: number, b: number) {
+  const R = r / 255, G = g / 255, B = b / 255;
+  const max = Math.max(R, G, B), min = Math.min(R, G, B);
+  const chroma = max - min;
+  let hue = 0;
+  if (chroma > 0) {
+    if (max === R) hue = 60 * (((G - B) / chroma + 6) % 6);
+    else if (max === G) hue = 60 * ((B - R) / chroma + 2);
+    else hue = 60 * ((R - G) / chroma + 4);
+  }
+  const lum = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  return { hue, chroma, lum };
+}
+
+/** Warm = reds, oranges, yellows, magentas. Cold = cyans, blues, violets. Greens sit in between. */
+export function hueTemperature(hue: number): number {
+  if (hue < 70 || hue >= 320) return 1; // red, orange, yellow, magenta
+  if (hue >= 160 && hue < 280) return -1; // cyan, blue, indigo
+  if (hue >= 70 && hue < 160) return -0.3; // greens: slightly cool
+  return -0.3; // violet 280..320
+}
+
+/** Analyse the pixels between columns x0 (inclusive) and x1 (exclusive). Samples every `stride` pixels. */
+export function analyzeRegion(
+  data: Uint8ClampedArray, width: number, height: number, x0: number, x1: number, stride = 2,
+): RegionAnalysis {
+  let n = 0, lum = 0, warm = 0, cold = 0;
+  let hx = 0, hy = 0, chromaSum = 0;
+  for (let y = 0; y < height; y += stride) {
+    for (let x = x0; x < x1; x += stride) {
+      const o = (y * width + x) * 4;
+      if (data[o + 3] < 128) continue;
+      const r = data[o], g = data[o + 1], b = data[o + 2];
+      const p = pixelInfo(r, g, b);
+      n++;
+      lum += p.lum;
+      const t = hueTemperature(p.hue) * p.chroma;
+      if (t > 0) warm += t; else cold -= t;
+      const rad = (p.hue * Math.PI) / 180;
+      hx += Math.cos(rad) * p.chroma;
+      hy += Math.sin(rad) * p.chroma;
+      chromaSum += p.chroma;
+    }
+  }
+  if (n === 0) return { brightness: 0, warmth: 0, similarity: 1, hue: null };
+  const meanChroma = chromaSum / n;
+  let hue: number | null = null;
+  if (meanChroma > 0.04) hue = ((Math.atan2(hy, hx) * 180) / Math.PI + 360) % 360;
+  // How close the colours are: 1 when every coloured pixel shares one hue, 0 when hues point
+  // all around the colour wheel. Greys/whites barely count (they have almost no hue), so
+  // clouds over the sea do not make the sea "clash" - only genuinely different colours do.
+  const concentration = chromaSum > 1e-6 ? Math.hypot(hx, hy) / chromaSum : 1;
+  return {
+    brightness: lum / n,
+    warmth: warm + cold > 1e-6 ? (warm - cold) / (warm + cold) : 0,
+    similarity: Math.min(1, Math.max(0, (concentration - 0.3) / 0.65)),
+    hue,
+  };
+}
+
+/** Splits the image down the middle and analyses each half. */
+export function analyzeHalves(data: Uint8ClampedArray, width: number, height: number) {
+  const mid = Math.floor(width / 2);
+  return {
+    left: analyzeRegion(data, width, height, 0, mid),
+    right: analyzeRegion(data, width, height, mid, width),
+  };
 }
 
 /**
- * Pixel weights per row. On a lat/lon grid, pixels near the poles cover much less
- * area than at the equator, so each row is weighted by cos(latitude).
+ * Hue -> root note. Every root stays inside one key (C major / A minor), so the left and
+ * right halves always blend; only mixed colours *within* a half add clashing notes.
+ *   warm  -> C (red), G (orange/yellow), F (magenta/violet)
+ *   cold  -> Em (cyan), Am (blue), Dm (indigo/violet)
  */
-export function rowWeights(projection: Projection, bbox: BBox, height: number): Float32Array {
-  const w = new Float32Array(height).fill(1);
-  if (projection !== "4326") return w;
-  const step = (bbox.north - bbox.south) / height;
-  for (let r = 0; r < height; r++) {
-    const lat = bbox.north - (r + 0.5) * step;
-    w[r] = Math.max(0, Math.cos((lat * Math.PI) / 180));
+export function rootFromHue(hue: number | null, quality: Quality): number {
+  const C = 0, D = 2, E = 4, F = 5, G = 7, A = 9;
+  if (hue === null) return quality === "major" ? C : A;
+  if (quality === "major") {
+    if (hue < 20 || hue >= 340) return C;
+    if (hue < 160) return G;
+    return F;
   }
-  return w;
+  if (hue >= 160 && hue < 205) return E;
+  if (hue >= 205 && hue < 255) return A;
+  if (hue >= 255 && hue < 340) return D;
+  return A;
 }
 
-/** Area of one pixel in km² (only meaningful for equal-ish area projections such as 3413). */
-export function pixelAreaKm2(bbox: BBox, width: number, height: number): number {
-  return (((bbox.east - bbox.west) / width) * (bbox.north - bbox.south)) / height / 1e6;
-}
-
-/** One number per frame: the global/regional summary that the drone follows. */
-export function frameMetric(grid: Grid, weights: Float32Array, metric: Metric, pixelKm2 = 0): number {
-  const { width, height, values } = grid;
-  if (metric.kind === "extent") {
-    let count = 0;
-    for (let i = 0; i < values.length; i++) if (values[i] >= metric.threshold) count++;
-    return (count * pixelKm2) / 1e6; // million km²
+export function buildChord(a: RegionAnalysis): Chord {
+  const quality: Quality = a.warmth >= 0 ? "major" : "minor";
+  const root = rootFromHue(a.hue, quality);
+  // brighter -> higher register: octave 3 (dark) .. octave 5 (bright)
+  const octave = 3 + Math.min(2, Math.floor(a.brightness * 3));
+  const base = 12 * (octave + 1) + root;
+  const third = quality === "major" ? 4 : 3;
+  const intervals = [0, third, 7];
+  let suffix = quality === "major" ? "" : "m";
+  // colours close together -> pure triad; more varied colours -> richer, then dissonant
+  if (a.similarity < 0.7) {
+    intervals.push(quality === "major" ? 11 : 10);
+    suffix += "7";
   }
-  let sum = 0;
-  let wsum = 0;
-  for (let r = 0; r < height; r++) {
-    const w = weights[r];
-    for (let c = 0; c < width; c++) {
-      const v = values[r * width + c];
-      if (!Number.isNaN(v)) {
-        sum += v * w;
-        wsum += w;
-      }
-    }
+  if (a.similarity < 0.45) {
+    intervals.push(14);
+    suffix = suffix.replace("7", "9");
   }
-  return wsum > 0 ? sum / wsum : NaN;
-}
-
-/** Splits the image into `steps` vertical slices: the needle plays one slice per beat. */
-export function columns(grid: Grid, weights: Float32Array, steps: number, metric: Metric): Column[] {
-  const { width, height, values } = grid;
-  const out: Column[] = [];
-  for (let s = 0; s < steps; s++) {
-    const x0 = Math.floor((s * width) / steps);
-    const x1 = Math.floor(((s + 1) * width) / steps);
-    let sum = 0, wsum = 0, valid = 0, hits = 0, total = 0;
-    for (let r = 0; r < height; r++) {
-      const w = weights[r];
-      for (let c = x0; c < x1; c++) {
-        total++;
-        const v = values[r * width + c];
-        if (Number.isNaN(v)) continue;
-        valid++;
-        sum += v * w;
-        wsum += w;
-        if (metric.kind === "extent" && v >= metric.threshold) hits++;
-      }
-    }
-    const coverage = total ? valid / total : 0;
-    if (metric.kind === "extent") {
-      const frac = total ? hits / total : 0;
-      out.push({ value: hits > 0 ? frac : null, coverage: Math.min(1, frac * 4) });
-    } else {
-      out.push({ value: wsum > 0 ? sum / wsum : null, coverage });
-    }
+  if (a.similarity < 0.25) {
+    intervals.push(1, 6); // minor second + tritone: clashing colours, clashing notes
+    suffix += " (clash)";
   }
-  return out;
-}
-
-/** Average of valid pixels in a small square around (x, y). */
-export function valueAt(grid: Grid, x: number, y: number, radius = 2): number | null {
-  let sum = 0, n = 0;
-  for (let dy = -radius; dy <= radius; dy++) {
-    for (let dx = -radius; dx <= radius; dx++) {
-      const cx = Math.round(x) + dx, cy = Math.round(y) + dy;
-      if (cx < 0 || cy < 0 || cx >= grid.width || cy >= grid.height) continue;
-      const v = grid.values[cy * grid.width + cx];
-      if (!Number.isNaN(v)) {
-        sum += v;
-        n++;
-      }
-    }
-  }
-  return n ? sum / n : null;
-}
-
-export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-export const normalize = (v: number, [lo, hi]: [number, number]) => clamp01((v - lo) / (hi - lo));
-
-/** Pixel -> latitude/longitude, for narrating where the explorer cursor is. */
-export function pixelToLatLon(
-  projection: Projection, bbox: BBox, width: number, height: number, px: number, py: number,
-): { lat: number; lon: number } {
-  const x = bbox.west + ((px + 0.5) / width) * (bbox.east - bbox.west);
-  const y = bbox.north - ((py + 0.5) / height) * (bbox.north - bbox.south);
-  if (projection === "4326") return { lat: y, lon: x };
-  // EPSG:3413: polar stereographic, true scale at 70°N, central meridian -45°.
-  // Spherical approximation (good to well under a degree; fine for narration).
-  const R = 6371008.8;
-  const k = R * (1 + Math.sin((70 * Math.PI) / 180));
-  const rho = Math.hypot(x, y);
-  const lat = 90 - (2 * Math.atan(rho / k) * 180) / Math.PI;
-  let lon = -45 + (Math.atan2(x, -y) * 180) / Math.PI;
-  if (lon < -180) lon += 360;
-  if (lon > 180) lon -= 360;
-  return { lat, lon };
-}
-
-export function formatLatLon({ lat, lon }: { lat: number; lon: number }): string {
-  const la = `${Math.abs(lat).toFixed(0)}°${lat >= 0 ? "N" : "S"}`;
-  const lo = `${Math.abs(lon).toFixed(0)}°${lon >= 0 ? "E" : "W"}`;
-  return `${la} ${lo}`;
+  // very bright -> add the root an octave up for extra treble
+  if (a.brightness > 0.55) intervals.push(12);
+  const notes = [...new Set(intervals)].sort((x, y) => x - y).map((i) => base + i);
+  return {
+    name: `${NOTE_NAMES[root]}${suffix}`,
+    quality,
+    notes,
+    cutoff: Math.round(500 * 2 ** (a.brightness * 4.5)), // ~500 Hz (dark) .. ~11 kHz (bright)
+    dissonance: 1 - a.similarity,
+  };
 }
