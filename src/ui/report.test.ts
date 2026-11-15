@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Chord, RegionAnalysis } from "../core/analysis";
 import { STRINGS } from "../i18n";
-import { chordHtml, describeHalf, level, meterHtml, meters, temperature } from "./report";
+import { chordHtml, describeHalf, level, meterHtml, meters, panMeter, temperature } from "./report";
 
 const ocean: RegionAnalysis = { brightness: 0.53, warmth: -0.8, similarity: 0.72, hue: 220, white: 0.1 };
 const cloud: RegionAnalysis = { brightness: 0.93, warmth: 0, similarity: 1, hue: null, white: 0.9 };
@@ -45,6 +45,19 @@ describe("[F12] meters", () => {
     expect(describeHalf(STRINGS.pt, cloud, c)).toBe(
       "Cores neutras, então C maior. Branco predominante, então as notas mais agudas. Cores próximas, então som harmônico.",
     );
+  });
+
+  it("[F4] shows where a square sits between the speakers, in each language", () => {
+    expect(panMeter(STRINGS.en, -1)).toMatchObject({ value: "100% left", fill: 0, kind: "pan" });
+    expect(panMeter(STRINGS.en, 1)).toMatchObject({ value: "100% right", fill: 1 });
+    expect(panMeter(STRINGS.en, 0)).toMatchObject({ value: "centre", fill: 0.5 });
+    expect(panMeter(STRINGS.en, -3 / 7).value).toBe("43% left");
+    expect(panMeter(STRINGS.pt, -1).value).toBe("100% esquerda");
+    expect(panMeter(STRINGS.pt, 5 / 7).value).toBe("71% direita");
+    expect(panMeter(STRINGS.pt, 0).value).toBe("centro");
+    const html = meterHtml(panMeter(STRINGS.en, 1));
+    expect(html).toContain('class="bar pan"');
+    expect(html).toContain('style="left:100%"');
   });
 
   it("draws bars and scale markers", () => {

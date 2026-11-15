@@ -30,8 +30,8 @@ export interface Meter {
   value: string;
   /** 0..1 */
   fill: number;
-  /** "bar" fills from the left; "scale" places a marker on a cold↔warm scale */
-  kind: "bar" | "scale";
+  /** "bar" fills from the left; "scale" places a marker on a cold↔warm scale; "pan" on a left↔right scale */
+  kind: "bar" | "scale" | "pan";
 }
 
 /** One meter per rule: [F1] brightness, [F2] colour similarity, [F3] warmth. */
@@ -47,12 +47,21 @@ export function meters(t: Strings, a: RegionAnalysis, c: Chord): Meter[] {
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
 
+/** [F4] Where a square sits between the speakers. / Onde o quadrado fica entre as caixas. */
+export function panMeter(t: Strings, pan: number): Meter {
+  const amount = Math.round(Math.abs(pan) * 100);
+  const side = amount === 0 ? "centre" : pan < 0 ? "left" : "right";
+  return { label: t.meters.pan, value: t.panLabel(side, amount), fill: (pan + 1) / 2, kind: "pan" };
+}
+
+const BAR_CLASS = { bar: "bar", scale: "bar warmth", pan: "bar pan" } as const;
+
 export function meterHtml(m: Meter): string {
   const fill = pct(Math.min(1, Math.max(0, m.fill)));
-  const style = m.kind === "scale" ? `left:${fill}` : `width:${fill}`;
+  const style = m.kind === "bar" ? `width:${fill}` : `left:${fill}`;
   return (
     `<div class="meter"><div class="top"><span>${escape(m.label)}</span><b>${escape(m.value)}</b></div>` +
-    `<div class="bar${m.kind === "scale" ? " warmth" : ""}" aria-hidden="true"><i style="${style}"></i></div></div>`
+    `<div class="${BAR_CLASS[m.kind]}" aria-hidden="true"><i style="${style}"></i></div></div>`
   );
 }
 

@@ -25,7 +25,9 @@ export interface Strings {
   yourImage: (name: string) => string;
   imageAlt: string;
   quality: { major: string; minor: string };
-  meters: { brightness: string; similarity: string; warmth: string };
+  meters: { brightness: string; similarity: string; warmth: string; pan: string };
+  /** [F4] e.g. "71% left" / "centre" */
+  panLabel: (side: "left" | "right" | "centre", percent: number) => string;
   brightnessWords: Word4; // low / mid / high / [F14] white = highest
   similarityWords: Word3; // clashing / rich / harmonic
   warmthLabel: (temp: "warm" | "cold" | "neutral", quality: string) => string;
@@ -69,7 +71,7 @@ export const STRINGS: Record<Lang, Strings> = {
       pianoNote: "A brighter area moves up one octave, and a mostly white one moves up two. During playback, each key lights up as it is played.",
       pianoCursor: "Selected square",
       cellHeading: "Selected square",
-      rule5: "<b>Squares</b> → the image is a matrix of squares, and each square gets its own chord by the same rules. Move the mouse over them, or use the arrow keys.",
+      rule5: "<b>Squares</b> → the image is a matrix of squares, and each square gets its own chord by the same rules. The further left a square is, the more its sound comes from the left speaker, and the same to the right. Move the mouse over them, or use the arrow keys.",
     },
     play: "Play",
     stop: "Stop",
@@ -83,7 +85,9 @@ export const STRINGS: Record<Lang, Strings> = {
       brightness: "Brightness → treble",
       similarity: "Colour similarity → harmony",
       warmth: "Cold ↔ warm → minor / major",
+      pan: "Position → left / right speaker",
     },
+    panLabel: (side, n) => (side === "centre" ? "centre" : `${n}% ${side}`),
     brightnessWords: ["low", "mid", "high", "white → highest"],
     similarityWords: ["clashing", "rich", "harmonic"],
     warmthLabel: (t, q) => (t === "warm" ? "warm → major" : t === "cold" ? "cold → minor" : `neutral → ${q}`),
@@ -125,7 +129,7 @@ export const STRINGS: Record<Lang, Strings> = {
       pianoNote: "Uma área mais clara sobe uma oitava, e uma área onde o branco predomina sobe duas. Durante a música, cada tecla acende quando é tocada.",
       pianoCursor: "Quadrado selecionado",
       cellHeading: "Quadrado selecionado",
-      rule5: "<b>Quadrados</b> → a imagem é uma matriz de quadrados, e cada quadrado ganha o seu próprio acorde pelas mesmas regras. Passe o mouse por eles ou use as setas do teclado.",
+      rule5: "<b>Quadrados</b> → a imagem é uma matriz de quadrados, e cada quadrado ganha o seu próprio acorde pelas mesmas regras. Quanto mais à esquerda o quadrado, mais o som sai da caixa esquerda, e o mesmo para a direita. Passe o mouse por eles ou use as setas do teclado.",
     },
     play: "Tocar",
     stop: "Parar",
@@ -139,7 +143,9 @@ export const STRINGS: Record<Lang, Strings> = {
       brightness: "Brilho → agudos",
       similarity: "Cores próximas → harmonia",
       warmth: "Frio ↔ quente → menor / maior",
+      pan: "Posição → caixa esquerda / direita",
     },
+    panLabel: (side, n) => (side === "centre" ? "centro" : `${n}% ${side === "left" ? "esquerda" : "direita"}`),
     brightnessWords: ["grave", "médio", "agudo", "branco → mais agudo"],
     similarityWords: ["dissonante", "rico", "harmônico"],
     warmthLabel: (t, q) => (t === "warm" ? "quente → maior" : t === "cold" ? "frio → menor" : `neutro → ${q}`),

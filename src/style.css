@@ -90,6 +90,9 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .bar i { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent); border-radius: 4px; }
 .bar.warmth { background: linear-gradient(90deg, var(--cold), #24304c 50%, var(--warm)); }
 .bar.warmth i { width: 4px; background: #fff; margin-left: -2px; }
+/* [F4] left ↔ right position: a dot on a line with a centre tick / posição esquerda ↔ direita */
+.bar.pan { overflow: visible; background: linear-gradient(90deg, #24304c calc(50% - 1px), var(--muted) calc(50% - 1px), var(--muted) calc(50% + 1px), #24304c calc(50% + 1px)); }
+.bar.pan i { width: 14px; height: 14px; top: -3px; bottom: auto; margin-left: -7px; border-radius: 50%; background: var(--cursor-key); }
 
 /* [F8] piano: purple = left half (low), green = right half (high)
    piano: roxo = metade esquerda (grave), verde = metade direita (aguda) */

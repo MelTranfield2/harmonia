@@ -51,8 +51,13 @@ export function cellRect(index: number, size: GridSize, width: number, height: n
   };
 }
 
-/** [F4] First column fully left, last column fully right. / Primeira coluna à esquerda, última à direita. */
-export function panForColumn(col: number, cols: number, max = 0.85): number {
+/**
+ * [F4] The further left a square is, the more its sound comes from the left speaker, and the
+ * same to the right: first column fully left (-1), last column fully right (+1), even steps between.
+ * Quanto mais à esquerda o quadrado, mais o som sai da caixa esquerda, e o mesmo para a direita:
+ * primeira coluna toda à esquerda (-1), última toda à direita (+1), passos iguais no meio.
+ */
+export function panForColumn(col: number, cols: number, max = 1): number {
   if (cols <= 1) return 0;
   return ((col / (cols - 1)) * 2 - 1) * max;
 }

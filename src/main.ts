@@ -37,7 +37,7 @@ import { SCENES, sceneCaption, sceneUrl } from "./data/scenes";
 import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
 import { cellElement, cellIndexOf, renderGrid, setActiveCell, setGridLabels } from "./ui/grid";
 import { createPiano, noteName, pulseKey, showChords } from "./ui/piano";
-import { chordHtml, describeHalf, meterHtml, meters } from "./ui/report";
+import { chordHtml, describeHalf, meterHtml, meters, panMeter } from "./ui/report";
 
 // ---------- page elements / elementos da página ----------
 const $ = <E extends HTMLElement>(id: string) => document.getElementById(id) as E;
@@ -165,7 +165,9 @@ function renderCell() {
   el.cellCard.classList.toggle("empty", !c);
   el.cellPos.textContent = c ? T().cellPosition(c.row + 1, c.col + 1) : "";
   el.cellChord.innerHTML = c ? chordHtml(T(), c.chord) : T().cellNone;
-  el.cellMeters.innerHTML = c ? meters(T(), c.analysis, c.chord).map(meterHtml).join("") : "";
+  // the three rule meters, plus [F4] where the square sits between the speakers
+  // os três medidores das regras, mais a posição do quadrado entre as caixas
+  el.cellMeters.innerHTML = c ? [...meters(T(), c.analysis, c.chord), panMeter(T(), c.pan)].map(meterHtml).join("") : "";
 }
 
 // [F11] every piece of text in the chosen language / todo o texto no idioma escolhido

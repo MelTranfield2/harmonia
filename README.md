@@ -24,7 +24,8 @@ Hear the colours of our planet. Harmonia turns a NASA satellite image (or any im
 
 Details:
 - **Matrix:** 8 squares across; the number of rows (2 to 8) follows the image's shape so squares stay roughly square.
-  A square's column sets where it sits between the speakers (first column left, last column right). Squares in the left half of
+  The further left a square is, the more its sound comes from the left speaker, and the same to the right: the first column is
+  100% left, the last column 100% right, with even steps between. The selected-square card shows this position. Squares in the left half of
   the image play low (octaves 2–3), squares in the right half play high (octaves 4–5), and mostly white squares play above both. The chord is strummed from its lowest note up.
 - **White, grey and black** areas (clouds, ice, dark sea) have almost no colour, so they count as neutral and harmonic: a plain C major chord.
 - **Octaves:** the left half plays low (octaves 2–3) and the right half high (octaves 4–5), so the two chords never overlap.
@@ -70,8 +71,8 @@ src/
     report.ts        meters + screen-reader sentences     / medidores + frases do leitor de tela
 ```
 
-Each module has a `*.test.ts` next to it (77 tests). Run them with `npm test`.
-*Cada módulo tem um `*.test.ts` ao lado (77 testes). Rode com `npm test`.*
+Each module has a `*.test.ts` next to it (79 tests). Run them with `npm test`.
+*Cada módulo tem um `*.test.ts` ao lado (79 testes). Rode com `npm test`.*
 
 Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) to find every part of that feature.
 *Cada funcionalidade tem uma etiqueta nos comentários do código. Busque a etiqueta (ex.: `[F2]`) para achar todas as partes.*

@@ -65,8 +65,9 @@ describe("[F13] each square follows the same rules", () => {
 
   it("[F4] pans from left to right across the columns", () => {
     const pans = cells.slice(0, 4).map((c) => c.pan);
-    expect(pans[0]).toBeCloseTo(-0.85);
-    expect(pans[3]).toBeCloseTo(0.85);
+    expect(pans[0]).toBe(-1); // first column: fully left
+    expect(pans[3]).toBe(1); // last column: fully right
+    expect(pans[1]).toBeCloseTo(-pans[2]); // mirrored around the centre
     expect([...pans].sort((a, b) => a - b)).toEqual(pans);
   });
 
@@ -85,6 +86,13 @@ describe("[F13] helpers", () => {
     const data = image(4, 4, (_x, y) => (y < 2 ? [255, 255, 255] : [0, 0, 0]));
     expect(analyzeRect(data, 4, { x0: 0, y0: 0, x1: 4, y1: 2 }, 1).brightness).toBeCloseTo(1);
     expect(analyzeRect(data, 4, { x0: 0, y0: 2, x1: 4, y1: 4 }, 1).brightness).toBeCloseTo(0);
+  });
+
+  it("[F4] moves in even steps across 8 columns", () => {
+    const pans = Array.from({ length: 8 }, (_, c) => panForColumn(c, 8));
+    expect(pans[0]).toBe(-1);
+    expect(pans[7]).toBe(1);
+    for (let c = 1; c < 8; c++) expect(pans[c] - pans[c - 1]).toBeCloseTo(2 / 7);
   });
 
   it("centres a single column and splits zones down the middle", () => {
