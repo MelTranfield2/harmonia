@@ -10,6 +10,7 @@
 //   [F4] Image split in half (left / right)   / Imagem dividida ao meio (esquerda / direita)
 //   [F5] Each half in its own octave zone     / Cada metade na sua faixa de oitavas
 //   [F6] Both halves stay in one key          / As duas metades ficam no mesmo tom
+//   [F14] Mostly white -> highest notes       / Branco predominante -> notas mais agudas
 // Search for a tag (e.g. "[F2]") to find every part of that feature.
 // Busque uma etiqueta (ex.: "[F2]") para achar todas as partes da funcionalidade.
 // =============================================================================
@@ -25,7 +26,15 @@ export interface RegionAnalysis {
   similarity: number;
   /** dominant hue in degrees, or null if the region is almost grey */
   hue: number | null;
+  /** [F14] 0..1 share of the region's pixels that are white / parte dos pixels que é branca */
+  white: number;
 }
+
+// [F14] White -> highest notes  ·  Branco -> notas mais agudas
+/** A pixel is white when it is very bright and has almost no colour. / Pixel branco: muito claro e quase sem cor. */
+export const isWhitePixel = (lum: number, chroma: number) => lum >= 0.8 && chroma <= 0.12;
+/** A region's predominant colour is white when more than half of it is. / Branco predomina quando passa da metade. */
+export const isMostlyWhite = (a: RegionAnalysis) => a.white > 0.5;
 
 export interface Chord {
   name: string;
@@ -96,7 +105,7 @@ export function analyzeRegion(
  */
 export function analyzeRect(data: Uint8ClampedArray, width: number, rect: Rect, stride = 2): RegionAnalysis {
   let n = 0, lum = 0, warm = 0, cold = 0;
-  let hx = 0, hy = 0, chromaSum = 0;
+  let hx = 0, hy = 0, chromaSum = 0, whitePixels = 0;
   for (let y = rect.y0; y < rect.y1; y += stride) {
     for (let x = rect.x0; x < rect.x1; x += stride) {
       const o = (y * width + x) * 4;
@@ -105,6 +114,7 @@ export function analyzeRect(data: Uint8ClampedArray, width: number, rect: Rect, 
       const p = pixelInfo(r, g, b);
       n++;
       lum += p.lum; // [F1] add up brightness / soma o brilho
+      if (isWhitePixel(p.lum, p.chroma)) whitePixels++; // [F14] count white pixels / conta os pixels brancos
       // [F3] add up warm vs cold colour, weighted by how colourful the pixel is
       //      soma cor quente vs fria, com peso pelo quanto o pixel é colorido
       const t = hueTemperature(p.hue) * p.chroma;
@@ -117,7 +127,7 @@ export function analyzeRect(data: Uint8ClampedArray, width: number, rect: Rect, 
       chromaSum += p.chroma;
     }
   }
-  if (n === 0) return { brightness: 0, warmth: 0, similarity: 1, hue: null };
+  if (n === 0) return { brightness: 0, warmth: 0, similarity: 1, hue: null, white: 0 };
   const meanChroma = chromaSum / n;
   // Almost grey (white cloud, ice, black sea at night)? Then its faint tints are just image
   // noise: treat it as having no hue, neutral temperature and colours that are all close.
@@ -142,6 +152,7 @@ export function analyzeRect(data: Uint8ClampedArray, width: number, rect: Rect, 
     warmth: grey || warm + cold <= 1e-6 ? 0 : (warm - cold) / (warm + cold), // [F3]
     similarity: grey ? 1 : 1 - (1 - hueSimilarity) * colourfulness, // [F2]
     hue, // [F6]
+    white: whitePixels / n, // [F14]
   };
 }
 
@@ -178,14 +189,24 @@ export function rootFromHue(hue: number | null, quality: Quality): number {
 }
 
 // [F5] Octave zones  ·  Faixas de oitavas
-// Esquerda = grave (oitavas 2-3), direita = aguda (oitavas 4-5).
+// Esquerda = grave (oitavas 2-3), direita = aguda (oitavas 4-5). Branco sobe mais uma [F14].
 /**
  * Each half gets its own octave zone so the two chords never sit on top of each other:
  * the left half plays low (octaves 2-3) and the right half plays high (octaves 4-5).
- * Inside its zone, a brighter half moves up an octave.
+ * Inside its zone a region climbs with its brightness:
+ *   dark -> the zone's first octave, bright -> one octave up,
+ *   [F14] mostly white (cloud, ice) -> two octaves up, the highest of all.
+ *   escuro -> primeira oitava da faixa, claro -> uma oitava acima,
+ *   [F14] branco predominante (nuvem, gelo) -> duas oitavas acima, o mais agudo de todos.
  */
 export type Zone = "low" | "high";
 export const ZONE_OCTAVE: Record<Zone, number> = { low: 2, high: 4 };
+
+/** [F1] [F14] How many octaves a region climbs inside its zone: 0 dark, 1 bright, 2 mostly white. */
+export function octaveLift(a: RegionAnalysis): 0 | 1 | 2 {
+  if (isMostlyWhite(a)) return 2;
+  return a.brightness >= 0.5 ? 1 : 0;
+}
 
 // -----------------------------------------------------------------------------
 // Analysis -> chord  ·  Análise -> acorde   (uses / usa [F1] [F2] [F3] [F5] [F6])
@@ -195,8 +216,9 @@ export function buildChord(a: RegionAnalysis, zone: Zone = "low"): Chord {
   const quality: Quality = a.warmth >= 0 ? "major" : "minor";
   const root = rootFromHue(a.hue, quality); // [F6]
   // [F5] start of the half's octave zone + [F1] brighter -> one octave higher
-  //      início da faixa da metade + mais brilho -> uma oitava acima
-  const octave = ZONE_OCTAVE[zone] + (a.brightness >= 0.5 ? 1 : 0);
+  //      + [F14] mostly white -> two octaves higher
+  //      início da faixa da metade + mais brilho -> uma oitava acima + branco -> duas oitavas acima
+  const octave = ZONE_OCTAVE[zone] + octaveLift(a);
   const base = 12 * (octave + 1) + root;
   // [F3] major third (4 semitones) or minor third (3) / terça maior (4 semitons) ou menor (3)
   const third = quality === "major" ? 4 : 3;

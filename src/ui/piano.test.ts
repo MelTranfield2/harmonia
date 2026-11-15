@@ -9,7 +9,7 @@ describe("[F8] note names", () => {
     expect(noteName(60)).toBe("C4");
     expect(noteName(57)).toBe("A3");
     expect(noteName(LOWEST)).toBe("C2");
-    expect(noteName(HIGHEST)).toBe("C7");
+    expect(noteName(HIGHEST)).toBe("C8");
   });
 });
 
@@ -20,15 +20,15 @@ describe("[F8] piano", () => {
     svg = createPiano(document.getElementById("p")!);
   });
 
-  it("draws every key from C2 to C7", () => {
+  it("draws every key from C2 to C8", () => {
     expect(svg.querySelectorAll(".key")).toHaveLength(HIGHEST - LOWEST + 1);
-    expect(svg.querySelectorAll(".key.white")).toHaveLength(36);
-    expect(svg.querySelectorAll(".key.black")).toHaveLength(25);
+    expect(svg.querySelectorAll(".key.white")).toHaveLength(43);
+    expect(svg.querySelectorAll(".key.black")).toHaveLength(30);
   });
 
   it("labels every C so octaves are easy to count", () => {
     const labels = [...svg.querySelectorAll(".c-key text")].map((t) => t.textContent);
-    expect(labels).toEqual(["C2", "C3", "C4", "C5", "C6", "C7"]);
+    expect(labels).toEqual(["C2", "C3", "C4", "C5", "C6", "C7", "C8"]);
   });
 
   it("[F5] lights the left chord and the right chord in different colours", () => {

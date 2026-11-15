@@ -26,6 +26,7 @@
 //   [F12] Meters + screen-reader descriptions  Medidores + descrições p/ leitor de tela  ui/report
 //   [F13] Image as a matrix: hear each square  Imagem como matriz: ouvir cada quadrado   core/grid, ui/grid, audio/sonify
 //         with the mouse or the arrow keys     com o mouse ou as setas do teclado
+//   [F14] Mostly white -> highest notes        Branco predominante -> notas mais agudas  core/analysis, ui/report
 // =============================================================================
 import "./style.css";
 import { Harmonia } from "./audio/sonify";

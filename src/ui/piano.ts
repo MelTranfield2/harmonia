@@ -1,8 +1,8 @@
 // =============================================================================
 // [F8] PIANO  /  PIANO
-// A simple piano (C2 to C7) drawn as SVG. Left-half notes and right-half notes are lit in
+// A simple piano (C2 to C8) drawn as SVG. Left-half notes and right-half notes are lit in
 // two colours and labelled, so you can see both chords and the octave each one plays in.
-// Um piano simples (C2 a C7) desenhado em SVG. As notas da metade esquerda e da direita
+// Um piano simples (C2 a C8) desenhado em SVG. As notas da metade esquerda e da direita
 // acendem em duas cores e com nome, para ver os dois acordes e a oitava de cada um.
 //   createPiano -> draws the keys once / desenha as teclas uma vez
 //   showChords  -> lights the chord notes [F5] and the selected square [F13]
@@ -11,7 +11,7 @@
 // =============================================================================
 
 export const LOWEST = 36; // C2
-export const HIGHEST = 96; // C7
+export const HIGHEST = 108; // C8 (room for the white octave [F14] / espaço para a oitava do branco)
 
 const NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 const BLACK = new Set([1, 3, 6, 8, 10]);

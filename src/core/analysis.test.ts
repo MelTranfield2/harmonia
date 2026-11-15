@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { analyzeHalves, analyzeRegion, buildChord, hueTemperature, pixelInfo, rootFromHue } from "./analysis";
+import {
+  analyzeHalves, analyzeRegion, buildChord, hueTemperature, isMostlyWhite, octaveLift, pixelInfo, rootFromHue,
+} from "./analysis";
 
 /** Builds RGBA pixels: left half one colour, right half another. */
 function image(w: number, h: number, left: (x: number, y: number) => number[], right = left) {
@@ -86,5 +88,65 @@ describe("mapping rules", () => {
     expect(mixed(4)).toBe(1); // nearly grey
     expect(mixed(8)).toBeLessThan(1);
     expect(mixed(8)).toBeGreaterThan(mixed(60)); // strongly coloured opposites clash most
+  });
+});
+
+describe("[F14] white -> highest notes", () => {
+  const solid = (rgb: number[]) => analyzeRegion(image(10, 10, () => rgb), 10, 10, 0, 10, 1);
+  const WHITE = [250, 250, 248], SAND = [230, 190, 140], NAVY = [10, 20, 60];
+  const top = (c: { notes: number[] }) => Math.max(...c.notes);
+  const bottom = (c: { notes: number[] }) => Math.min(...c.notes);
+
+  it("measures how much of a region is white", () => {
+    expect(solid(WHITE).white).toBe(1);
+    expect(solid(SAND).white).toBe(0); // bright, but coloured
+    expect(solid([128, 128, 128]).white).toBe(0); // grey, but not bright
+    const half = analyzeRegion(image(10, 10, () => WHITE, () => NAVY), 10, 10, 0, 10, 1);
+    expect(half.white).toBeCloseTo(0.5);
+  });
+
+  it("only counts as mostly white when more than half is white", () => {
+    const share = (whiteCols: number) =>
+      analyzeRegion(image(10, 10, (x) => (x < whiteCols ? WHITE : NAVY)), 10, 10, 0, 10, 1);
+    expect(isMostlyWhite(share(5))).toBe(false);
+    expect(isMostlyWhite(share(6))).toBe(true);
+  });
+
+  it("climbs dark -> bright -> white, one octave at a time", () => {
+    expect([NAVY, SAND, WHITE].map((c) => octaveLift(solid(c)))).toEqual([0, 1, 2]);
+    for (const zone of ["low", "high"] as const) {
+      const dark = buildChord({ ...solid(WHITE), brightness: 0.2, white: 0 }, zone);
+      const bright = buildChord({ ...solid(WHITE), white: 0 }, zone);
+      const white = buildChord(solid(WHITE), zone);
+      expect(bottom(bright) - bottom(dark)).toBe(12);
+      expect(bottom(white) - bottom(bright)).toBe(12);
+    }
+  });
+
+  it("plays white above every other colour on the same side", () => {
+    for (const zone of ["low", "high"] as const) {
+      const white = buildChord(solid(WHITE), zone);
+      for (const other of [SAND, NAVY, [20, 60, 200], [230, 120, 30], [40, 160, 60]]) {
+        expect(bottom(white)).toBeGreaterThan(bottom(buildChord(solid(other), zone)));
+      }
+    }
+  });
+
+  it("puts white in octave 4 on the left and octave 6 on the right, as plain C major", () => {
+    expect(buildChord(solid(WHITE), "low").notes).toEqual([60, 64, 67, 72]); // C4 E4 G4 C5
+    expect(buildChord(solid(WHITE), "high").notes).toEqual([84, 88, 91, 96]); // C6 E6 G6 C7
+  });
+
+  it("[F5] still keeps a white left side no higher than a white right side", () => {
+    expect(top(buildChord(solid(WHITE), "low"))).toBeLessThan(bottom(buildChord(solid(WHITE), "high")));
+  });
+
+  it("never plays above the top of the piano (C8), even for the richest chord", () => {
+    for (const hue of [null, 0, 40, 180, 220, 280, 330]) {
+      for (const warmth of [1, -1]) {
+        const a = { brightness: 0.95, warmth, similarity: 0, hue, white: 0.9 };
+        expect(top(buildChord(a, "high"))).toBeLessThanOrEqual(108);
+      }
+    }
   });
 });

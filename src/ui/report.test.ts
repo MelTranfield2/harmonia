@@ -3,7 +3,9 @@ import type { Chord, RegionAnalysis } from "../core/analysis";
 import { STRINGS } from "../i18n";
 import { chordHtml, describeHalf, level, meterHtml, meters, temperature } from "./report";
 
-const ocean: RegionAnalysis = { brightness: 0.53, warmth: -0.8, similarity: 0.72, hue: 220 };
+const ocean: RegionAnalysis = { brightness: 0.53, warmth: -0.8, similarity: 0.72, hue: 220, white: 0.1 };
+const cloud: RegionAnalysis = { brightness: 0.93, warmth: 0, similarity: 1, hue: null, white: 0.9 };
+const c: Chord = { name: "C", quality: "major", notes: [84, 88, 91, 96], cutoff: 9000, dissonance: 0 };
 const am: Chord = { name: "Am", quality: "minor", notes: [57, 60, 64], cutoff: 2600, dissonance: 0.28 };
 
 describe("[F12] levels", () => {
@@ -32,6 +34,17 @@ describe("[F12] meters", () => {
     const pt = meters(STRINGS.pt, ocean, am);
     expect(pt[0].value).toBe("53% · médio");
     expect(pt[2].value).toBe("frio → menor");
+  });
+
+  it("[F14] says when white predominates, in each language", () => {
+    expect(meters(STRINGS.en, cloud, c)[0].value).toBe("93% · white → highest");
+    expect(meters(STRINGS.pt, cloud, c)[0].value).toBe("93% · branco → mais agudo");
+    expect(describeHalf(STRINGS.en, cloud, c)).toBe(
+      "neutral colours, so C major. Mostly white, so the highest notes. Colours close together, so harmonic sound.",
+    );
+    expect(describeHalf(STRINGS.pt, cloud, c)).toBe(
+      "Cores neutras, então C maior. Branco predominante, então as notas mais agudas. Cores próximas, então som harmônico.",
+    );
   });
 
   it("draws bars and scale markers", () => {

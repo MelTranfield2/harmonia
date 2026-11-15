@@ -18,7 +18,7 @@ describe("[F11] translations", () => {
 
   it("translates the words used by the meters", () => {
     expect(STRINGS.pt.quality).toEqual({ major: "maior", minor: "menor" });
-    expect(STRINGS.pt.brightnessWords).toHaveLength(3);
+    expect(STRINGS.pt.brightnessWords).toHaveLength(4); // low, mid, high, [F14] white
     expect(STRINGS.pt.similarityWords).toHaveLength(3);
   });
 });

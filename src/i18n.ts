@@ -10,6 +10,7 @@
 export type Lang = "en" | "pt";
 
 type Word3 = [string, string, string];
+type Word4 = [string, string, string, string];
 
 export interface Strings {
   htmlLang: string;
@@ -25,11 +26,11 @@ export interface Strings {
   imageAlt: string;
   quality: { major: string; minor: string };
   meters: { brightness: string; similarity: string; warmth: string };
-  brightnessWords: Word3; // low / mid / high
+  brightnessWords: Word4; // low / mid / high / [F14] white = highest
   similarityWords: Word3; // clashing / rich / harmonic
   warmthLabel: (temp: "warm" | "cold" | "neutral", quality: string) => string;
   describe: (p: {
-    temp: "warm" | "cold" | "neutral"; chord: string; quality: string; bright: 0 | 1 | 2; similar: 0 | 1 | 2;
+    temp: "warm" | "cold" | "neutral"; chord: string; quality: string; bright: 0 | 1 | 2 | 3; similar: 0 | 1 | 2;
   }) => string;
   halves: (left: string, right: string) => string;
   pianoLabel: (left: string, right: string) => string;
@@ -56,16 +57,16 @@ export const STRINGS: Record<Lang, Strings> = {
       rightHalf: "Right half",
       rightEar: "right ear ▶",
       rulesHeading: "How the image becomes sound",
-      rule1: "<b>Brighter image</b> → more treble: higher notes and a brighter tone.",
+      rule1: "<b>Brighter image</b> → more treble: higher notes and a brighter tone. <b>Mostly white</b> areas (clouds, ice) play the highest notes of all.",
       rule2: "<b>Colours close together</b> → more harmonic: a plain chord. Varied colours add extra notes, and very mixed colours clash.",
       rule3: "<b>Warm colours</b> (red, orange, yellow) → major chord. <b>Cold colours</b> (blue, cyan) → minor chord.",
       rule4: "<b>Left / right</b> → each half of the image plays in its own speaker.",
       footer: "Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).",
       langGroup: "Language",
       pianoHeading: "The chords on a piano",
-      pianoLeft: "Left half: low (octaves 2–3)",
-      pianoRight: "Right half: high (octaves 4–5)",
-      pianoNote: "A brighter half moves up one octave. During playback, each key lights up as it is played.",
+      pianoLeft: "Left half: low (octaves 2–3, white 4)",
+      pianoRight: "Right half: high (octaves 4–5, white 6)",
+      pianoNote: "A brighter area moves up one octave, and a mostly white one moves up two. During playback, each key lights up as it is played.",
       pianoCursor: "Selected square",
       cellHeading: "Selected square",
       rule5: "<b>Squares</b> → the image is a matrix of squares, and each square gets its own chord by the same rules. Move the mouse over them, or use the arrow keys.",
@@ -83,12 +84,12 @@ export const STRINGS: Record<Lang, Strings> = {
       similarity: "Colour similarity → harmony",
       warmth: "Cold ↔ warm → minor / major",
     },
-    brightnessWords: ["low", "mid", "high"],
+    brightnessWords: ["low", "mid", "high", "white → highest"],
     similarityWords: ["clashing", "rich", "harmonic"],
     warmthLabel: (t, q) => (t === "warm" ? "warm → major" : t === "cold" ? "cold → minor" : `neutral → ${q}`),
     describe: ({ temp, chord, quality, bright, similar }) =>
       `${temp} colours, so ${chord} ${quality}. ` +
-      `${["Dark", "Medium", "Bright"][bright]}, so ${["low", "middle", "high"][bright]} notes. ` +
+      `${["Dark", "Medium", "Bright", "Mostly white"][bright]}, so ${["low", "middle", "high", "the highest"][bright]} notes. ` +
       `Colours ${["very varied", "fairly mixed", "close together"][similar]}, so ${["clashing", "rich", "harmonic"][similar]} sound.`,
     halves: (l, r) => `Left half: ${l} Right half: ${r}`,
     pianoLabel: (l, r) => `Piano. Left half, low: ${l}. Right half, high: ${r}.`,
@@ -112,16 +113,16 @@ export const STRINGS: Record<Lang, Strings> = {
       rightHalf: "Metade direita",
       rightEar: "ouvido direito ▶",
       rulesHeading: "Como a imagem vira som",
-      rule1: "<b>Imagem mais brilhante</b> → mais agudos: notas mais altas e timbre mais brilhante.",
+      rule1: "<b>Imagem mais brilhante</b> → mais agudos: notas mais altas e timbre mais brilhante. Áreas onde o <b>branco predomina</b> (nuvens, gelo) tocam as notas mais agudas de todas.",
       rule2: "<b>Cores próximas</b> → som mais harmônico: um acorde simples. Cores variadas acrescentam notas, e cores muito misturadas soam dissonantes.",
       rule3: "<b>Cores quentes</b> (vermelho, laranja, amarelo) → acorde maior. <b>Cores frias</b> (azul, ciano) → acorde menor.",
       rule4: "<b>Esquerda / direita</b> → cada metade da imagem toca na sua própria caixa de som.",
       footer: "Imagens: cor verdadeira dos sensores MODIS e VIIRS da NASA, via NASA Global Imagery Browse Services (GIBS).",
       langGroup: "Idioma",
       pianoHeading: "Os acordes no piano",
-      pianoLeft: "Metade esquerda: grave (oitavas 2–3)",
-      pianoRight: "Metade direita: aguda (oitavas 4–5)",
-      pianoNote: "Uma metade mais clara sobe uma oitava. Durante a música, cada tecla acende quando é tocada.",
+      pianoLeft: "Metade esquerda: grave (oitavas 2–3, branco 4)",
+      pianoRight: "Metade direita: aguda (oitavas 4–5, branco 6)",
+      pianoNote: "Uma área mais clara sobe uma oitava, e uma área onde o branco predomina sobe duas. Durante a música, cada tecla acende quando é tocada.",
       pianoCursor: "Quadrado selecionado",
       cellHeading: "Quadrado selecionado",
       rule5: "<b>Quadrados</b> → a imagem é uma matriz de quadrados, e cada quadrado ganha o seu próprio acorde pelas mesmas regras. Passe o mouse por eles ou use as setas do teclado.",
@@ -139,12 +140,12 @@ export const STRINGS: Record<Lang, Strings> = {
       similarity: "Cores próximas → harmonia",
       warmth: "Frio ↔ quente → menor / maior",
     },
-    brightnessWords: ["grave", "médio", "agudo"],
+    brightnessWords: ["grave", "médio", "agudo", "branco → mais agudo"],
     similarityWords: ["dissonante", "rico", "harmônico"],
     warmthLabel: (t, q) => (t === "warm" ? "quente → maior" : t === "cold" ? "frio → menor" : `neutro → ${q}`),
     describe: ({ temp, chord, quality, bright, similar }) =>
       `Cores ${{ warm: "quentes", cold: "frias", neutral: "neutras" }[temp]}, então ${chord} ${quality}. ` +
-      `${["Escura", "Média", "Clara"][bright]}, então notas ${["graves", "médias", "agudas"][bright]}. ` +
+      `${["Escura", "Média", "Clara", "Branco predominante"][bright]}, então ${["notas graves", "notas médias", "notas agudas", "as notas mais agudas"][bright]}. ` +
       `Cores ${["muito variadas", "um pouco misturadas", "próximas"][similar]}, então som ${["dissonante", "rico", "harmônico"][similar]}.`,
     halves: (l, r) => `Metade esquerda: ${l} Metade direita: ${r}`,
     pianoLabel: (l, r) => `Piano. Metade esquerda, grave: ${l}. Metade direita, aguda: ${r}.`,

@@ -15,6 +15,7 @@ Hear the colours of our planet. Harmonia turns a NASA satellite image (or any im
 | Image / Imagem | Sound / Som |
 |---|---|
 | Brighter image / Imagem mais brilhante | More treble: higher notes, brighter tone / Mais agudos |
+| Mostly white (clouds, ice) / Branco predominante (nuvens, gelo) | The highest notes of all / As notas mais agudas de todas |
 | Colours close together / Cores próximas | More harmonic: plain chord. Mixed colours add notes, then clash / Mais harmônico |
 | Warm colours / Cores quentes | Major chord / Acorde maior |
 | Cold colours / Cores frias | Minor chord / Acorde menor |
@@ -24,10 +25,12 @@ Hear the colours of our planet. Harmonia turns a NASA satellite image (or any im
 Details:
 - **Matrix:** 8 squares across; the number of rows (2 to 8) follows the image's shape so squares stay roughly square.
   A square's column sets where it sits between the speakers (first column left, last column right). Squares in the left half of
-  the image play low (octaves 2–3), squares in the right half play high (octaves 4–5). The chord is strummed from its lowest note up.
+  the image play low (octaves 2–3), squares in the right half play high (octaves 4–5), and mostly white squares play above both. The chord is strummed from its lowest note up.
 - **White, grey and black** areas (clouds, ice, dark sea) have almost no colour, so they count as neutral and harmonic: a plain C major chord.
 - **Octaves:** the left half plays low (octaves 2–3) and the right half high (octaves 4–5), so the two chords never overlap.
 - **Brightness** = average luminance → one octave up inside the half's range, plus a lowpass filter from ~500 Hz (dark) to ~11 kHz (bright).
+- **White:** when more than half of an area is white (very bright pixels with almost no colour), it moves up **two** octaves instead of one:
+  octave 4 on the left, octave 6 on the right. So white is always the highest sound on its side.
   Very bright halves also add the root an octave up.
 - **Colour closeness** = how tightly the hues cluster on the colour wheel. Greys and whites barely count, so clouds don't make the sea "clash".
   Close colours → triad. Less close → adds 7th, then 9th, then a minor 2nd + tritone (clash), plus slight detune.
@@ -63,12 +66,12 @@ src/
     load-image.ts    download / open / draw an image      / baixar / abrir / desenhar imagem
   ui/
     grid.ts          squares drawn over the image         / quadrados desenhados sobre a imagem
-    piano.ts         piano keyboard (SVG)                 / teclado de piano (SVG)
+    piano.ts         piano keyboard C2-C8 (SVG)           / teclado de piano C2-C8 (SVG)
     report.ts        meters + screen-reader sentences     / medidores + frases do leitor de tela
 ```
 
-Each module has a `*.test.ts` next to it (69 tests). Run them with `npm test`.
-*Cada módulo tem um `*.test.ts` ao lado (69 testes). Rode com `npm test`.*
+Each module has a `*.test.ts` next to it (77 tests). Run them with `npm test`.
+*Cada módulo tem um `*.test.ts` ao lado (77 testes). Rode com `npm test`.*
 
 Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) to find every part of that feature.
 *Cada funcionalidade tem uma etiqueta nos comentários do código. Busque a etiqueta (ex.: `[F2]`) para achar todas as partes.*
@@ -88,6 +91,7 @@ Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) t
 | `[F11]` | English / Portuguese switch | Troca inglês / português | `i18n`, `main` |
 | `[F12]` | Meters + screen-reader descriptions | Medidores + descrições para leitor de tela | `ui/report`, `i18n` |
 | `[F13]` | Image as a matrix: hear each square with the mouse or arrow keys | Imagem como matriz: ouvir cada quadrado com o mouse ou as setas | `core/grid`, `ui/grid`, `audio/sonify`, `main` |
+| `[F14]` | Mostly white → highest notes | Branco predominante → notas mais agudas | `core/analysis`, `ui/report`, `ui/piano` |
 
 ## License
 Apache 2.0, see [LICENSE](LICENSE).

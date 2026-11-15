@@ -5,16 +5,21 @@
 // Transforma uma metade analisada + o acorde no que se vê (medidores) e no que o leitor
 // de tela fala (uma frase). Puro: devolve dados e HTML, não mexe no DOM.
 // =============================================================================
-import type { Chord, RegionAnalysis } from "../core/analysis";
+import { isMostlyWhite, type Chord, type RegionAnalysis } from "../core/analysis";
 import type { Strings } from "../i18n";
 
 export type Level = 0 | 1 | 2;
+/** dark, medium, bright, or [F14] mostly white / escuro, médio, claro, ou branco predominante */
+export type BrightLevel = Level | 3;
 export type Temperature = "warm" | "cold" | "neutral";
 
 export const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** 0..1 -> low (0), mid (1), high (2) / baixo, médio, alto */
 export const level = (v: number): Level => (v < 0.35 ? 0 : v < 0.65 ? 1 : 2);
+
+/** [F1] [F14] brightness level, with "mostly white" as the top step / nível de brilho, com "branco" no topo */
+export const brightLevel = (a: RegionAnalysis): BrightLevel => (isMostlyWhite(a) ? 3 : level(a.brightness));
 
 /** [F3] warmth -1..1 -> warm / cold / neutral */
 export const temperature = (warmth: number): Temperature =>
@@ -33,7 +38,7 @@ export interface Meter {
 export function meters(t: Strings, a: RegionAnalysis, c: Chord): Meter[] {
   const q = t.quality[c.quality];
   return [
-    { label: t.meters.brightness, value: `${pct(a.brightness)} · ${t.brightnessWords[level(a.brightness)]}`, fill: a.brightness, kind: "bar" },
+    { label: t.meters.brightness, value: `${pct(a.brightness)} · ${t.brightnessWords[brightLevel(a)]}`, fill: a.brightness, kind: "bar" },
     { label: t.meters.similarity, value: `${pct(a.similarity)} · ${t.similarityWords[level(a.similarity)]}`, fill: a.similarity, kind: "bar" },
     { label: t.meters.warmth, value: t.warmthLabel(temperature(a.warmth), q), fill: (a.warmth + 1) / 2, kind: "scale" },
   ];
@@ -62,7 +67,7 @@ export function describeHalf(t: Strings, a: RegionAnalysis, c: Chord): string {
     temp: temperature(a.warmth),
     chord: c.name,
     quality: t.quality[c.quality],
-    bright: level(a.brightness),
+    bright: brightLevel(a),
     similar: level(a.similarity),
   });
 }
