@@ -1,4 +1,12 @@
-// All visible text in English and Brazilian Portuguese.
+// =============================================================================
+// [F11] TRANSLATIONS  /  TRADUÇÕES
+// All visible text in English and Brazilian Portuguese. Edit the wording here.
+// Todo o texto visível em inglês e português do Brasil. Ajuste os textos aqui.
+//   STRINGS     -> page text, meters [F12], screen-reader sentences [F12]
+//                  texto da página, medidores, frases do leitor de tela
+//   SCENE_TEXT  -> NASA image titles and captions [F9] / títulos e legendas das imagens
+//   initialLang -> browser language, or the last choice / idioma do navegador ou última escolha
+// =============================================================================
 export type Lang = "en" | "pt";
 
 type Word3 = [string, string, string];
@@ -130,7 +138,8 @@ export interface SceneText {
   caption: string;
 }
 
-/** Scene titles and captions, in the same order as SCENES in main.ts. */
+// [F9] NASA image titles and captions / títulos e legendas das imagens da NASA
+/** Scene titles and captions, in the same order as SCENES in main.ts. / Mesma ordem de SCENES em main.ts. */
 export const SCENE_TEXT: Record<Lang, SceneText[]> = {
   en: [
     { title: "Namib coast", caption: "The Atlantic Ocean and clouds (left) meet the Namib Desert (right)." },

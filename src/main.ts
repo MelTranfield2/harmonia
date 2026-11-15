@@ -1,3 +1,20 @@
+// =============================================================================
+// HARMONIA - main page / página principal
+//
+// FEATURE MAP / MAPA DE FUNCIONALIDADES  (search the tag / busque a etiqueta)
+//   [F1]  Brighter image -> more treble          Imagem mais brilhante -> mais agudos      analysis.ts, sonify.ts
+//   [F2]  Close colours -> more harmonic         Cores próximas -> mais harmônico          analysis.ts, sonify.ts
+//   [F3]  Warm -> major, cold -> minor           Quentes -> maior, frias -> menor          analysis.ts
+//   [F4]  Image split in half -> left/right      Imagem dividida ao meio -> esq./dir.      analysis.ts, sonify.ts
+//   [F5]  Left low, right high (octaves)         Esquerda grave, direita aguda (oitavas)   analysis.ts
+//   [F6]  Both halves in one key                 As duas metades no mesmo tom              analysis.ts
+//   [F7]  Play / stop                            Tocar / parar                             sonify.ts, main.ts
+//   [F8]  Piano showing the chords               Piano mostrando os acordes                piano.ts, main.ts
+//   [F9]  NASA satellite images                  Imagens de satélite da NASA               main.ts, i18n.ts
+//   [F10] Upload / drag-and-drop an image        Enviar / arrastar uma imagem              main.ts
+//   [F11] English / Portuguese switch            Troca inglês / português                  i18n.ts, main.ts
+//   [F12] Meters + screen-reader descriptions    Medidores + descrições p/ leitor de tela  main.ts
+// =============================================================================
 import "./style.css";
 import * as Tone from "tone";
 import { analyzeHalves, buildChord, type Chord, type RegionAnalysis } from "./analysis";
@@ -5,9 +22,16 @@ import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
 import { createPiano, noteName, pulseKey, showChords } from "./piano";
 import { Harmonia } from "./sonify";
 
+// -----------------------------------------------------------------------------
+// [F9] NASA satellite images  ·  Imagens de satélite da NASA
 // NASA true-colour satellite images from GIBS (free, no key, CORS enabled).
 // Each one was checked by eye for clouds and satellite gaps before being added.
 // Titles and captions live in i18n.ts (SCENE_TEXT), in the same order.
+// Imagens de cor verdadeira do GIBS (grátis, sem chave). Cada uma foi conferida no olho.
+// Títulos e legendas ficam em i18n.ts (SCENE_TEXT), na mesma ordem.
+// To add an image: add a line here AND a title/caption in both languages in i18n.ts.
+// Para adicionar uma imagem: uma linha aqui E título/legenda nos dois idiomas em i18n.ts.
+// -----------------------------------------------------------------------------
 interface Scene {
   satellite: "MODIS_Terra" | "VIIRS_SNPP" | "VIIRS_NOAA20";
   /** south, west, north, east in degrees */
@@ -39,7 +63,7 @@ function sceneUrl(s: Scene): string {
   return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?${p}`;
 }
 
-// ---------- language ----------
+// ---------- [F11] language / idioma ----------
 let lang: Lang = initialLang();
 const T = () => STRINGS[lang];
 
@@ -51,7 +75,7 @@ function sceneCaption(i: number): string {
   return `${text.title}: ${text.caption} NASA ${SATELLITE_NAMES[s.satellite]}, ${d}.`;
 }
 
-// ---------- elements and state ----------
+// ---------- elements and state / elementos e estado ----------
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $<HTMLCanvasElement>("stage");
 const ctx = stage.getContext("2d", { willReadFrequently: true })!;
@@ -68,6 +92,8 @@ let source: { kind: "scene"; index: number } | { kind: "file"; name: string } | 
 /** what the status line is showing, so it can be re-translated */
 let statusKey: { kind: "loading"; index: number } | { kind: "loadError" | "fileError" } | null = null;
 
+// [F12] Tells screen readers something new (hidden "live" region in index.html).
+//       Avisa o leitor de tela (região "live" escondida no index.html).
 function announce(text: string) {
   live.textContent = "";
   requestAnimationFrame(() => (live.textContent = text));
@@ -84,7 +110,8 @@ function renderStatus() {
   else status.textContent = T()[statusKey.kind];
 }
 
-// ---------- image loading ----------
+// ---------- image loading / carregar imagem ----------
+// Draws the image on the canvas, then analyses it. / Desenha a imagem e depois analisa.
 function showImage(img: ImageBitmap) {
   const maxW = 960;
   const scale = Math.min(1, maxW / img.width);
@@ -104,6 +131,7 @@ function renderCaption() {
 let loadToken = 0;
 let selectedScene: number | null = 0;
 
+// [F9] Downloads one NASA image. / Baixa uma imagem da NASA.
 async function loadScene(i: number) {
   const token = ++loadToken;
   selectedScene = i;
@@ -122,6 +150,7 @@ async function loadScene(i: number) {
   }
 }
 
+// [F9] Buttons to pick a NASA image. / Botões para escolher a imagem.
 function renderScenePicker() {
   const box = $("scenes");
   box.innerHTML = "";
@@ -135,6 +164,7 @@ function renderScenePicker() {
   });
 }
 
+// [F10] Opens an image from the user's computer. / Abre uma imagem do computador da pessoa.
 async function loadFile(file: File) {
   if (!file.type.startsWith("image/")) return;
   loadToken++;
@@ -150,10 +180,12 @@ async function loadFile(file: File) {
   }
 }
 
-// ---------- analysis -> chords -> UI ----------
+// ---------- analysis -> chords -> UI / análise -> acordes -> tela ----------
 function analyse() {
   const { data, width, height } = ctx.getImageData(0, 0, stage.width, stage.height);
+  // [F4] split in half / divide ao meio
   halves = analyzeHalves(data, width, height);
+  // [F5] left half -> low zone, right half -> high zone / esquerda -> grave, direita -> aguda
   chords = { left: buildChord(halves.left, "low"), right: buildChord(halves.right, "high") };
   engine.setChords(chords.left, chords.right);
   renderHalves();
@@ -161,6 +193,7 @@ function analyse() {
   announceHalves();
 }
 
+// ---------- [F12] meters and descriptions / medidores e descrições ----------
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const level = (v: number): 0 | 1 | 2 => (v < 0.35 ? 0 : v < 0.65 ? 1 : 2);
 const temperature = (a: RegionAnalysis): "warm" | "cold" | "neutral" =>
@@ -189,6 +222,8 @@ function renderHalves() {
     const a = halves[side], c = chords[side], t = T();
     const q = t.quality[c.quality];
     $(`${side}-chord`).innerHTML = `${c.name}<span class="q ${c.quality}">${q}</span>`;
+    // one meter per rule: [F1] brightness, [F2] similarity, [F3] warmth
+    // um medidor por regra: brilho, cores próximas, quente/frio
     $(`${side}-meters`).innerHTML =
       meter(t.meters.brightness, `${pct(a.brightness)} · ${t.brightnessWords[level(a.brightness)]}`, a.brightness) +
       meter(t.meters.similarity, `${pct(a.similarity)} · ${t.similarityWords[level(a.similarity)]}`, a.similarity) +
@@ -196,7 +231,8 @@ function renderHalves() {
   }
 }
 
-// ---------- piano ----------
+// ---------- [F8] piano ----------
+// Left chord in purple (low), right chord in green (high). / Acorde esquerdo roxo (grave), direito verde (agudo).
 const piano = createPiano($("piano"));
 
 function renderPiano() {
@@ -206,7 +242,9 @@ function renderPiano() {
     T().pianoLabel(`${chords.left.name} (${names(chords.left)})`, `${chords.right.name} (${names(chords.right)})`));
 }
 
-// ---------- page language ----------
+// ---------- [F11] page language / idioma da página ----------
+// Re-writes every piece of text on the page in the chosen language.
+// Reescreve todo o texto da página no idioma escolhido.
 function applyLanguage(announceIt = false) {
   const t = T();
   document.documentElement.lang = t.htmlLang;
@@ -233,7 +271,9 @@ document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) =>
   }),
 );
 
-// ---------- playback ----------
+// ---------- [F7] playback / tocar ----------
+// On every note: flash that half of the image [F4] and light the piano key [F8].
+// A cada nota: pisca aquela metade da imagem e acende a tecla do piano.
 engine.onStep = (side, time, midi) => {
   Tone.getDraw().schedule(() => {
     const el = $(`flash-${side}`);
@@ -258,11 +298,14 @@ async function togglePlay() {
 }
 
 playBtn.addEventListener("click", () => void togglePlay());
+
+// [F10] "Upload an image" button / botão "Enviar uma imagem"
 $<HTMLInputElement>("file").addEventListener("change", (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (f) void loadFile(f);
 });
 
+// [F10] Drag an image onto the picture / arrastar uma imagem para cima da figura
 const drop = $("drop");
 drop.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -276,6 +319,7 @@ drop.addEventListener("drop", (e) => {
   if (f) void loadFile(f);
 });
 
+// [F7] Space bar = play / stop / Barra de espaço = tocar / parar
 document.addEventListener("keydown", (e) => {
   const tag = (e.target as HTMLElement).tagName;
   if (e.key === " " && tag !== "BUTTON" && tag !== "INPUT") {
@@ -284,5 +328,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// Start: set the language, then load the first NASA image.
+// Início: aplica o idioma e carrega a primeira imagem da NASA.
 applyLanguage();
 void loadScene(0);

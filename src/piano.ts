@@ -1,5 +1,13 @@
+// =============================================================================
+// [F8] PIANO  /  PIANO
 // A simple piano (C2 to C7) drawn as SVG. Left-half notes and right-half notes are lit in
 // two colours and labelled, so you can see both chords and the octave each one plays in.
+// Um piano simples (C2 a C7) desenhado em SVG. As notas da metade esquerda e da direita
+// acendem em duas cores e com nome, para ver os dois acordes e a oitava de cada um.
+//   createPiano -> draws the keys once / desenha as teclas uma vez
+//   showChords  -> lights the chord notes [F5] / acende as notas dos acordes
+//   pulseKey    -> flashes a key while it plays [F7] / pisca a tecla enquanto toca
+// =============================================================================
 
 export const LOWEST = 36; // C2
 export const HIGHEST = 96; // C7
@@ -45,6 +53,7 @@ export function createPiano(container: HTMLElement): SVGSVGElement {
         "text-anchor": "middle",
       });
       // C keys always show their name, so the octaves are easy to count
+      // As teclas Dó sempre mostram o nome, para facilitar contar as oitavas
       if (m % 12 === 0) {
         label.textContent = noteName(m);
         g.classList.add("c-key");

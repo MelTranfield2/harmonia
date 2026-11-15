@@ -7,6 +7,10 @@
     <title>Harmonia</title>
   </head>
   <body>
+    <!-- Feature tags [F1]..[F12] are explained at the top of src/main.ts -->
+    <!-- As etiquetas [F1]..[F12] estão explicadas no topo de src/main.ts -->
+
+    <!-- [F11] Title + language switch / Título + troca de idioma -->
     <header class="site">
       <div class="title-row">
         <h1>Harmonia</h1>
@@ -19,6 +23,8 @@
     </header>
 
     <main>
+      <!-- [F4] Image split in half (white line) + [F10] drop zone -->
+      <!-- Imagem dividida ao meio (linha branca) + área para soltar imagem -->
       <div id="drop" class="stage-wrap">
         <canvas id="stage" class="stage" role="img" aria-label="Image"></canvas>
         <div id="flash-left" class="flash left" aria-hidden="true"></div>
@@ -28,6 +34,7 @@
       </div>
       <p id="caption" class="caption"></p>
 
+      <!-- [F7] Play / stop + [F10] upload / Tocar / parar + enviar imagem -->
       <div class="controls">
         <button id="play" type="button" class="primary">Play</button>
         <label class="upload">
@@ -36,11 +43,13 @@
         </label>
       </div>
 
+      <!-- [F9] NASA image buttons (filled in by main.ts) / Botões das imagens da NASA -->
       <section class="picker" aria-labelledby="scenes-h">
         <h2 id="scenes-h" data-i18n="scenesHeading">NASA satellite images</h2>
         <div id="scenes" class="scenes"></div>
       </section>
 
+      <!-- [F12] Chord + meters for each half ([F1] [F2] [F3]) / Acorde + medidores de cada metade -->
       <div class="halves">
         <section class="half" aria-labelledby="left-h">
           <h2 id="left-h"><span data-i18n="leftHalf">Left half</span> <span class="ear" data-i18n="leftEar">◀ left ear</span></h2>
@@ -54,6 +63,7 @@
         </section>
       </div>
 
+      <!-- [F8] Piano (drawn by piano.ts) + [F5] octave legend / Piano + legenda das oitavas -->
       <section class="piano-box" aria-labelledby="piano-h">
         <h2 id="piano-h" data-i18n="pianoHeading">The chords on a piano</h2>
         <div id="piano" class="piano-wrap"></div>
@@ -64,6 +74,7 @@
         <p class="piano-note" data-i18n="pianoNote"></p>
       </section>
 
+      <!-- The 4 mapping rules explained / As 4 regras de mapeamento explicadas -->
       <section class="rules" aria-labelledby="rules-h">
         <h2 id="rules-h" data-i18n="rulesHeading">How the image becomes sound</h2>
         <ul>
@@ -74,6 +85,7 @@
         </ul>
       </section>
 
+      <!-- [F12] Hidden: what screen readers announce / Escondido: o que o leitor de tela anuncia -->
       <div id="live" class="sr-only" aria-live="polite"></div>
     </main>
 

@@ -14,6 +14,7 @@
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
 main, header.site, footer.site { max-width: 960px; margin: 0 auto; padding: 0 16px; }
 header.site { padding-top: 24px; }
+/* [F11] language switch / troca de idioma */
 .title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .lang { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
 .lang button { border: 0; background: transparent; min-height: 38px; padding: 6px 12px; }
@@ -24,6 +25,8 @@ footer.site { color: var(--muted); font-size: 0.85rem; padding: 24px 16px 32px; 
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* [F4] image split in half, [F7] flash on each note, [F10] drop zone
+   imagem dividida ao meio, pisca a cada nota, área para soltar imagem */
 .stage-wrap { position: relative; border-radius: 14px; overflow: hidden; background: #000; border: 2px dashed transparent; }
 .stage-wrap.dragging { border-color: var(--accent); }
 .stage { display: block; width: 100%; height: auto; }
@@ -37,6 +40,7 @@ footer.site { color: var(--muted); font-size: 0.85rem; padding: 24px 16px 32px; 
 .status:empty { display: none; }
 .caption { color: var(--muted); font-size: 0.9rem; margin: 6px 0 0; }
 
+/* [F7] play button, [F10] upload button / botão tocar, botão enviar imagem */
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 button, .upload span {
   font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line);
@@ -47,11 +51,13 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .upload input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .upload input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* [F9] NASA image picker / seletor de imagens da NASA */
 .picker { margin: 0 0 16px; }
 .picker h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; }
 .scenes { display: flex; flex-wrap: wrap; gap: 8px; }
 .scenes button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
+/* [F12] left / right cards with chord and meters / cartões esquerda / direita com acorde e medidores */
 .halves { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 640px) { .halves { grid-template-columns: 1fr; } }
 .half { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
@@ -70,7 +76,8 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .bar.warmth { background: linear-gradient(90deg, var(--cold), #24304c 50%, var(--warm)); }
 .bar.warmth i { width: 4px !important; background: #fff; margin-left: -2px; }
 
-/* piano */
+/* [F8] piano: purple = left half (low), green = right half (high)
+   piano: roxo = metade esquerda (grave), verde = metade direita (aguda) */
 :root { --left-key: #a98bff; --right-key: #39cf9d; }
 .piano-box { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .piano-box h2 { margin: 0 0 10px; font-size: 1rem; }
