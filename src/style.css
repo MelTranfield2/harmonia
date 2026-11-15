@@ -22,6 +22,7 @@ header.site { padding-top: 24px; }
 header.site h1 { margin: 0; font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -0.02em; }
 header.site p { margin: 4px 0 16px; color: var(--muted); max-width: 65ch; }
 footer.site { color: var(--muted); font-size: 0.85rem; padding: 24px 16px 32px; }
+footer.site p { margin: 0 0 6px; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 

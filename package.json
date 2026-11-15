@@ -1,5 +1,6 @@
 {
   "name": "harmonia",
+  "description": "Hear the colours of our planet: NASA satellite images turned into music. Code written with AI assistance (Claude Code, Anthropic), directed by the Harmonia team.",
   "private": true,
   "version": "0.1.0",
   "type": "module",

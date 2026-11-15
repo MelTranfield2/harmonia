@@ -96,5 +96,29 @@ Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) t
 | `[F13]` | Image as a matrix: hear each square with the mouse or arrow keys | Imagem como matriz: ouvir cada quadrado com o mouse ou as setas | `core/grid`, `ui/grid`, `audio/sonify`, `main` |
 | `[F14]` | Mostly white → highest notes | Branco predominante → notas mais agudas | `core/analysis`, `ui/report`, `ui/piano` |
 
+## AI use / Uso de IA
+
+NASA Space Apps asks teams to say clearly where and how AI tools were used.
+
+- **Code:** the source code, tests and documentation in this repository were written with
+  [Claude Code](https://claude.com/claude-code), Anthropic's AI coding assistant, directed by our team.
+  The team defined the concept and the image-to-sound rules and chose the NASA images.
+- **Metadata:** every AI-assisted commit is marked `Co-Authored-By: Claude` in the git history, and the page
+  carries an `ai-disclosure` meta tag.
+- **Images:** all images are real NASA satellite imagery (MODIS and VIIRS, via NASA GIBS). None are AI-generated.
+- **Sound:** produced live in the browser by this code, from the image's pixels. No AI audio generator is used.
+- **Text:** drafts of the project summary, video script and slide text were produced with Claude and edited by the team.
+
+*O NASA Space Apps pede que as equipes digam com clareza onde e como usaram ferramentas de IA.*
+
+- ***Código:** o código-fonte, os testes e a documentação deste repositório foram escritos com o
+  [Claude Code](https://claude.com/claude-code), assistente de programação com IA da Anthropic, sob a direção da nossa equipe.
+  A equipe definiu o conceito e as regras de imagem para som e escolheu as imagens da NASA.*
+- ***Metadados:** cada commit com ajuda de IA está marcado com `Co-Authored-By: Claude` no histórico do git, e a página
+  tem uma meta tag `ai-disclosure`.*
+- ***Imagens:** todas são imagens reais de satélite da NASA (MODIS e VIIRS, via NASA GIBS). Nenhuma foi gerada por IA.*
+- ***Som:** produzido ao vivo no navegador por este código, a partir dos pixels da imagem. Não há gerador de áudio de IA.*
+- ***Texto:** os rascunhos do resumo do projeto, do roteiro do vídeo e do texto dos slides foram produzidos com o Claude e editados pela equipe.*
+
 ## License
 Apache 2.0, see [LICENSE](LICENSE).

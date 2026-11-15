@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Harmonia: hear the colours of a NASA satellite image. / Ouça as cores de uma imagem de satélite da NASA." />
+    <!-- AI-use disclosure (NASA Space Apps rule: acknowledge AI-generated code in text and metadata) -->
+    <!-- Declaração de uso de IA (regra do NASA Space Apps: declarar código gerado por IA em texto e metadados) -->
+    <meta name="ai-disclosure" content="Source code, tests and documentation written with Claude Code (Anthropic AI coding assistant), directed by the Harmonia team. Images are real NASA satellite imagery, not AI-generated. Sound is produced live by the app's code." />
     <title>Harmonia</title>
   </head>
   <body>
@@ -104,8 +107,10 @@
       <div id="live" class="sr-only" aria-live="polite"></div>
     </main>
 
-    <footer class="site" data-i18n="footer">
-      Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).
+    <footer class="site">
+      <p data-i18n="footer">Images: NASA MODIS and VIIRS true colour, via NASA Global Imagery Browse Services (GIBS).</p>
+      <!-- AI-use disclosure, visible on the page / Declaração de uso de IA, visível na página -->
+      <p data-i18n="aiNote">AI use: this app's code was written with Claude Code (Anthropic's AI coding assistant), directed by our team. The images are real NASA satellite imagery, not AI-generated, and the sound is produced live by the app's code.</p>
     </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
