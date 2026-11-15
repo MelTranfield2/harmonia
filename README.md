@@ -39,26 +39,43 @@ Seven NASA true-colour satellite images are built in (Namib coast, Sahara, Austr
 
 ## Code / Código
 
+```
+src/
+  main.ts          wiring only: state + events          / só a ligação: estado + eventos
+  i18n.ts          all text, English + Portuguese       / todo o texto, inglês + português
+  core/            pure logic, no browser APIs          / lógica pura, sem APIs do navegador
+    analysis.ts      image -> chords                      / imagem -> acordes
+    sequence.ts      which note plays when               / qual nota toca e quando
+  audio/
+    sonify.ts        Tone.js sound engine                 / motor de som Tone.js
+  data/
+    scenes.ts        NASA images + GIBS URLs + captions   / imagens da NASA + URLs + legendas
+    load-image.ts    download / open / draw an image      / baixar / abrir / desenhar imagem
+  ui/
+    piano.ts         piano keyboard (SVG)                 / teclado de piano (SVG)
+    report.ts        meters + screen-reader sentences     / medidores + frases do leitor de tela
+```
+
+Each module has a `*.test.ts` next to it (43 tests). Run them with `npm test`.
+*Cada módulo tem um `*.test.ts` ao lado (43 testes). Rode com `npm test`.*
+
 Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) to find every part of that feature.
 *Cada funcionalidade tem uma etiqueta nos comentários do código. Busque a etiqueta (ex.: `[F2]`) para achar todas as partes.*
 
 | Tag | Feature | Funcionalidade | Files / Arquivos |
 |---|---|---|---|
-| `[F1]` | Brighter image → more treble | Imagem mais brilhante → mais agudos | `analysis.ts`, `sonify.ts` |
-| `[F2]` | Close colours → more harmonic | Cores próximas → mais harmônico | `analysis.ts`, `sonify.ts` |
-| `[F3]` | Warm → major, cold → minor | Quentes → maior, frias → menor | `analysis.ts` |
-| `[F4]` | Image split in half → left / right speaker | Imagem dividida ao meio → caixa esq. / dir. | `analysis.ts`, `sonify.ts`, `main.ts` |
-| `[F5]` | Left low, right high (octaves) | Esquerda grave, direita aguda (oitavas) | `analysis.ts`, `piano.ts` |
-| `[F6]` | Both halves in one key | As duas metades no mesmo tom | `analysis.ts` |
-| `[F7]` | Play / stop | Tocar / parar | `sonify.ts`, `main.ts` |
-| `[F8]` | Piano showing the chords | Piano mostrando os acordes | `piano.ts`, `main.ts` |
-| `[F9]` | NASA satellite images | Imagens de satélite da NASA | `main.ts`, `i18n.ts` |
-| `[F10]` | Upload / drag-and-drop an image | Enviar / arrastar uma imagem | `main.ts` |
-| `[F11]` | English / Portuguese switch | Troca inglês / português | `i18n.ts`, `main.ts` |
-| `[F12]` | Meters + screen-reader descriptions | Medidores + descrições para leitor de tela | `main.ts`, `i18n.ts` |
-
-All files are in `src/`. `analysis.ts` is pure maths with unit tests in `analysis.test.ts`.
-*Todos os arquivos ficam em `src/`. O `analysis.ts` é só matemática, com testes em `analysis.test.ts`.*
+| `[F1]` | Brighter image → more treble | Imagem mais brilhante → mais agudos | `core/analysis`, `audio/sonify` |
+| `[F2]` | Close colours → more harmonic | Cores próximas → mais harmônico | `core/analysis`, `audio/sonify` |
+| `[F3]` | Warm → major, cold → minor | Quentes → maior, frias → menor | `core/analysis`, `ui/report` |
+| `[F4]` | Image split in half → left / right speaker | Imagem dividida ao meio → caixa esq. / dir. | `core/analysis`, `core/sequence`, `audio/sonify` |
+| `[F5]` | Left low, right high (octaves) | Esquerda grave, direita aguda (oitavas) | `core/analysis`, `ui/piano` |
+| `[F6]` | Both halves in one key | As duas metades no mesmo tom | `core/analysis` |
+| `[F7]` | Play / stop | Tocar / parar | `core/sequence`, `audio/sonify`, `main` |
+| `[F8]` | Piano showing the chords | Piano mostrando os acordes | `ui/piano`, `main` |
+| `[F9]` | NASA satellite images | Imagens de satélite da NASA | `data/scenes`, `data/load-image`, `i18n` |
+| `[F10]` | Upload / drag-and-drop an image | Enviar / arrastar uma imagem | `data/load-image`, `main` |
+| `[F11]` | English / Portuguese switch | Troca inglês / português | `i18n`, `main` |
+| `[F12]` | Meters + screen-reader descriptions | Medidores + descrições para leitor de tela | `ui/report`, `i18n` |
 
 ## License
 Apache 2.0, see [LICENSE](LICENSE).

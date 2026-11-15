@@ -74,7 +74,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .bar { height: 8px; border-radius: 4px; background: #24304c; overflow: hidden; position: relative; }
 .bar i { position: absolute; top: 0; bottom: 0; left: 0; background: var(--accent); border-radius: 4px; }
 .bar.warmth { background: linear-gradient(90deg, var(--cold), #24304c 50%, var(--warm)); }
-.bar.warmth i { width: 4px !important; background: #fff; margin-left: -2px; }
+.bar.warmth i { width: 4px; background: #fff; margin-left: -2px; }
 
 /* [F8] piano: purple = left half (low), green = right half (high)
    piano: roxo = metade esquerda (grave), verde = metade direita (aguda) */
