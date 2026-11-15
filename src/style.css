@@ -94,28 +94,31 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .bar.pan { overflow: visible; background: linear-gradient(90deg, #24304c calc(50% - 1px), var(--muted) calc(50% - 1px), var(--muted) calc(50% + 1px), #24304c calc(50% + 1px)); }
 .bar.pan i { width: 14px; height: 14px; top: -3px; bottom: auto; margin-left: -7px; border-radius: 50%; background: var(--cursor-key); }
 
-/* [F8] piano: purple = left half (low), green = right half (high)
-   piano: roxo = metade esquerda (grave), verde = metade direita (aguda) */
+/* [F8] piano: purple = left half (low), green = right half (high), orange band = selected square
+   piano: roxo = metade esquerda (grave), verde = metade direita (aguda), faixa laranja = quadrado selecionado */
 :root { --left-key: #a98bff; --right-key: #39cf9d; --cursor-key: #ff7a59; }
 .piano-box { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .piano-box h2 { margin: 0 0 10px; font-size: 1rem; }
-.piano-wrap { overflow-x: auto; }
-.piano { display: block; width: 100%; min-width: 560px; height: auto; }
+/* the whole keyboard always fits the width: nothing is cut off / o teclado inteiro sempre cabe na largura */
+.piano { display: block; width: 100%; height: auto; }
 .piano .key rect { stroke: #0b1122; stroke-width: 1; transition: fill 0.15s; }
 .piano .white rect { fill: #f2f4f9; }
 .piano .black rect { fill: #1d2438; }
-.piano text { font: 600 7.5px system-ui, sans-serif; fill: #5a6684; pointer-events: none; }
+.piano text { font: 700 8.5px system-ui, sans-serif; fill: #5a6684; pointer-events: none; }
 .piano .black text { font-size: 6px; fill: #fff; }
 .piano .on-left rect { fill: var(--left-key); }
 .piano .on-right rect { fill: var(--right-key); }
 .piano .on-both rect { fill: #ffcc4d; }
-/* [F13] selected square: drawn after the others so it wins / quadrado selecionado: vem por último, então vence */
-.piano .on-cursor rect { fill: var(--cursor-key); }
+/* [F13] selected square: an orange band at the bottom of the key, over the half's colour
+   quadrado selecionado: faixa laranja embaixo da tecla, por cima da cor da metade */
+.piano .key .mark { fill: none; stroke: none; }
+.piano .key.on-cursor .mark { fill: var(--cursor-key); }
 .piano .on-left text, .piano .on-right text, .piano .on-both text, .piano .on-cursor text { fill: #0b1122; font-weight: 800; }
 .piano .hit rect { stroke: #fff; stroke-width: 3; }
-.piano-legend { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; }
+.piano-legend { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 0.95rem; }
+.piano-legend b { font-size: 1.05rem; }
 .piano-legend li { display: flex; align-items: center; gap: 8px; }
-.swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; flex: none; }
 .swatch.left { background: var(--left-key); }
 .swatch.right { background: var(--right-key); }
 .swatch.cursor { background: var(--cursor-key); }

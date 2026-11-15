@@ -74,14 +74,16 @@
         </section>
       </div>
 
-      <!-- [F8] Piano (drawn by piano.ts) + [F5] octave legend / Piano + legenda das oitavas -->
+      <!-- [F8] Piano (drawn by ui/piano.ts) + legend with the chords / Piano + legenda com os acordes -->
       <section class="piano-box" aria-labelledby="piano-h">
         <h2 id="piano-h" data-i18n="pianoHeading">The chords on a piano</h2>
         <div id="piano" class="piano-wrap"></div>
         <ul class="piano-legend">
-          <li><span class="swatch left" aria-hidden="true"></span><span data-i18n="pianoLeft">Left half: low (octaves 2–3)</span></li>
-          <li><span class="swatch right" aria-hidden="true"></span><span data-i18n="pianoRight">Right half: high (octaves 4–5)</span></li>
-          <li><span class="swatch cursor" aria-hidden="true"></span><span data-i18n="pianoCursor">Selected square</span></li>
+          <!-- Each line: colour + chord name + its notes (filled in by main.ts) -->
+          <!-- Cada linha: cor + nome do acorde + as notas (preenchido por main.ts) -->
+          <li><span class="swatch left" aria-hidden="true"></span><span id="legend-left"></span></li>
+          <li><span class="swatch right" aria-hidden="true"></span><span id="legend-right"></span></li>
+          <li><span class="swatch cursor" aria-hidden="true"></span><span id="legend-cursor"></span></li>
         </ul>
         <p class="piano-note" data-i18n="pianoNote"></p>
       </section>

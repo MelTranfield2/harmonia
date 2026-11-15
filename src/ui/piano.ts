@@ -4,10 +4,20 @@
 // two colours and labelled, so you can see both chords and the octave each one plays in.
 // Um piano simples (C2 a C8) desenhado em SVG. As notas da metade esquerda e da direita
 // acendem em duas cores e com nome, para ver os dois acordes e a oitava de cada um.
-//   createPiano -> draws the keys once / desenha as teclas uma vez
-//   showChords  -> lights the chord notes [F5] and the selected square [F13]
-//                  acende as notas dos acordes e do quadrado selecionado
-//   pulseKey    -> flashes a key while it plays [F7] / pisca a tecla enquanto toca
+//   createPiano      -> draws the keys once / desenha as teclas uma vez
+//   showChords       -> lights the chord notes [F5] and the selected square [F13]
+//                       acende as notas dos acordes e do quadrado selecionado
+//   renderLegendItem -> writes a chord and its notes in readable text under the piano
+//                       escreve um acorde e as notas em texto legível embaixo do piano
+//   pulseKey         -> flashes a key while it plays [F7] / pisca a tecla enquanto toca
+//
+// How a key is coloured / Como uma tecla é colorida:
+//   whole key  = left half (purple), right half (green), both (amber)
+//   bottom band = the selected square (orange). It is a separate band so it never hides
+//                 the half's colour when they share a note.
+//   tecla inteira = metade esquerda (roxo), direita (verde), as duas (âmbar)
+//   faixa de baixo = quadrado selecionado (laranja). É uma faixa separada para nunca
+//                    esconder a cor da metade quando as notas coincidem.
 // =============================================================================
 
 export const LOWEST = 36; // C2
@@ -16,6 +26,8 @@ export const HIGHEST = 108; // C8 (room for the white octave [F14] / espaço par
 const NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 const BLACK = new Set([1, 3, 6, 8, 10]);
 const WHITE_W = 20, WHITE_H = 110, BLACK_W = 12, BLACK_H = 68;
+/** Height of the selected-square band at the bottom of a key. / Altura da faixa do quadrado selecionado. */
+const WHITE_BAND = 30, BLACK_BAND = 24;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export const noteName = (midi: number) => `${NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
@@ -48,6 +60,13 @@ export function createPiano(container: HTMLElement): SVGSVGElement {
         x: xs.get(m)! + (black ? 0 : 0.5), y: 0.5, rx: 2,
         width: black ? BLACK_W : WHITE_W - 1, height: black ? BLACK_H : WHITE_H,
       }));
+      // [F13] band for the selected square, invisible until the key gets "on-cursor"
+      //       faixa do quadrado selecionado, invisível até a tecla receber "on-cursor"
+      const band = black ? BLACK_BAND : WHITE_BAND, keyH = black ? BLACK_H : WHITE_H;
+      g.append(el("rect", {
+        class: "mark", x: xs.get(m)! + (black ? 0 : 0.5), y: keyH - band + 0.5, rx: 2,
+        width: black ? BLACK_W : WHITE_W - 1, height: band,
+      }));
       const label = el("text", {
         x: xs.get(m)! + (black ? BLACK_W : WHITE_W) / 2,
         y: black ? BLACK_H - 6 : WHITE_H - 8,
@@ -78,13 +97,29 @@ export function showChords(
     g.classList.toggle("on-left", inL && !inR);
     g.classList.toggle("on-right", inR && !inL);
     g.classList.toggle("on-both", inL && inR);
-    // [F13] notes of the square under the cursor (drawn on top of the other colours)
-    //       notas do quadrado sob o cursor (desenhadas por cima das outras cores)
+    // [F13] notes of the selected square: an orange band at the bottom of the key, so the
+    //       half's colour above it stays visible
+    //       notas do quadrado selecionado: uma faixa laranja embaixo da tecla, para a cor
+    //       da metade continuar visível em cima
     g.classList.toggle("on-cursor", inC);
     const text = g.querySelector("text")!;
     text.textContent = inL || inR || inC ? noteName(m) : m % 12 === 0 ? noteName(m) : "";
   });
   svg.setAttribute("aria-label", ariaLabel);
+}
+
+/**
+ * Writes one legend line in normal-size text, e.g. "Left half: Am · A3 C4 E4". The names
+ * inside the keys get tiny on small screens; this line is always readable.
+ * Escreve uma linha da legenda em texto de tamanho normal. Os nomes dentro das teclas ficam
+ * minúsculos em telas pequenas; esta linha é sempre legível.
+ */
+export function renderLegendItem(
+  target: HTMLElement, label: string, chord: { name: string; notes: readonly number[] } | null,
+) {
+  const name = document.createElement("b");
+  name.textContent = chord ? chord.name : "–";
+  target.replaceChildren(`${label}: `, name, chord ? ` · ${chord.notes.map(noteName).join(" ")}` : "");
 }
 
 /** Briefly highlights a key as it is played. */

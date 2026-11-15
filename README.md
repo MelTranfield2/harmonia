@@ -36,6 +36,8 @@ Details:
 - **Colour closeness** = how tightly the hues cluster on the colour wheel. Greys and whites barely count, so clouds don't make the sea "clash".
   Close colours → triad. Less close → adds 7th, then 9th, then a minor 2nd + tritone (clash), plus slight detune.
 - **Warm/cold**: reds, oranges, yellows and magentas count as warm; cyans, blues and indigos as cold; greens and violets as slightly cool.
+- **Piano:** a visual aid only (it makes no sound). A whole key is coloured for the left half (purple) or right half (green); an orange band at
+  the bottom of a key marks the selected square, so the two never hide each other. The chords and their notes are also written out under the keyboard.
 - **Roots** come from the dominant hue but always stay in one key (C major / A minor), so the two halves blend.
 
 ## Run / Rodar
@@ -71,8 +73,8 @@ src/
     report.ts        meters + screen-reader sentences     / medidores + frases do leitor de tela
 ```
 
-Each module has a `*.test.ts` next to it (79 tests). Run them with `npm test`.
-*Cada módulo tem um `*.test.ts` ao lado (79 testes). Rode com `npm test`.*
+Each module has a `*.test.ts` next to it (82 tests). Run them with `npm test`.
+*Cada módulo tem um `*.test.ts` ao lado (82 testes). Rode com `npm test`.*
 
 Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) to find every part of that feature.
 *Cada funcionalidade tem uma etiqueta nos comentários do código. Busque a etiqueta (ex.: `[F2]`) para achar todas as partes.*

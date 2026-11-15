@@ -36,7 +36,7 @@ import { drawImage, loadImageFromFile, loadImageFromUrl } from "./data/load-imag
 import { SCENES, sceneCaption, sceneUrl } from "./data/scenes";
 import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
 import { cellElement, cellIndexOf, renderGrid, setActiveCell, setGridLabels } from "./ui/grid";
-import { createPiano, noteName, pulseKey, showChords } from "./ui/piano";
+import { createPiano, noteName, pulseKey, renderLegendItem, showChords } from "./ui/piano";
 import { chordHtml, describeHalf, meterHtml, meters, panMeter } from "./ui/report";
 
 // ---------- page elements / elementos da página ----------
@@ -141,6 +141,11 @@ function renderPiano() {
     T().pianoLabel(label(chords.left), label(chords.right)),
     activeCell()?.chord.notes ?? [],
   );
+  // the same three chords in readable text under the keyboard
+  // os mesmos três acordes em texto legível embaixo do teclado
+  renderLegendItem($("legend-left"), T().page.leftHalf, chords.left);
+  renderLegendItem($("legend-right"), T().page.rightHalf, chords.right);
+  renderLegendItem($("legend-cursor"), T().page.cellHeading, activeCell()?.chord ?? null);
 }
 
 // ---------- [F13] matrix of squares / matriz de quadrados ----------

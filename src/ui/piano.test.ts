@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createPiano, HIGHEST, LOWEST, noteName, pulseKey, showChords } from "./piano";
+import { createPiano, HIGHEST, LOWEST, noteName, pulseKey, renderLegendItem, showChords } from "./piano";
 
 const key = (svg: SVGSVGElement, midi: number) => svg.querySelector<SVGGElement>(`.key[data-midi="${midi}"]`)!;
 
@@ -65,10 +65,40 @@ describe("[F8] piano", () => {
     expect(key(svg, 62).querySelector("text")!.textContent).toBe("");
   });
 
-  it("[F13] can light a note that is also in a half's chord", () => {
+  it("[F13] can light a note that is also in a half's chord, keeping both colours", () => {
     showChords(svg, [57], [71], "", [57]);
     expect(key(svg, 57).classList.contains("on-cursor")).toBe(true);
     expect(key(svg, 57).classList.contains("on-left")).toBe(true);
+  });
+
+  it("[F13] gives every key a separate band for the selected square", () => {
+    for (const midi of [60, 61]) { // a white key and a black key
+      const rects = key(svg, midi).querySelectorAll("rect");
+      expect(rects).toHaveLength(2);
+      const [body, band] = [...rects];
+      expect(band.classList.contains("mark")).toBe(true);
+      // the band sits at the bottom of the key and is shorter than it
+      const bottom = (r: Element) => Number(r.getAttribute("y")) + Number(r.getAttribute("height"));
+      expect(bottom(band)).toBeCloseTo(bottom(body));
+      expect(Number(band.getAttribute("height"))).toBeLessThan(Number(body.getAttribute("height")) / 2);
+    }
+  });
+
+  it("writes a chord and its notes as readable text for the legend", () => {
+    const li = document.createElement("span");
+    renderLegendItem(li, "Left half", { name: "Am", notes: [57, 60, 64] });
+    expect(li.textContent).toBe("Left half: Am · A3 C4 E4");
+    expect(li.querySelector("b")!.textContent).toBe("Am");
+
+    renderLegendItem(li, "Selected square", null);
+    expect(li.textContent).toBe("Selected square: –");
+  });
+
+  it("keeps odd chord names as plain text in the legend", () => {
+    const li = document.createElement("span");
+    renderLegendItem(li, "x", { name: "<b>C</b>", notes: [60] });
+    expect(li.querySelectorAll("b")).toHaveLength(1);
+    expect(li.textContent).toBe("x: <b>C</b> · C4");
   });
 
   it("[F7] flashes a key while it plays", () => {
