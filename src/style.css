@@ -36,6 +36,21 @@ footer.site { color: var(--muted); font-size: 0.85rem; padding: 24px 16px 32px; 
 .flash.right { right: 0; }
 .flash.on { opacity: 1; transition: none; }
 @media (prefers-reduced-motion: reduce) { .flash { display: none; } }
+/* [F13] matrix of squares over the image / matriz de quadrados sobre a imagem */
+.grid {
+  position: absolute; inset: 0; display: grid;
+  grid-template-columns: repeat(var(--cols, 8), 1fr);
+  grid-template-rows: repeat(var(--rows, 6), 1fr);
+}
+.grid-row { display: contents; }
+.cell { border: 1px solid rgba(255, 255, 255, 0.22); cursor: pointer; }
+.cell:hover { background: rgba(255, 255, 255, 0.14); }
+.cell.active { background: rgba(255, 122, 89, 0.3); box-shadow: inset 0 0 0 3px var(--cursor-key); }
+.cell:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.grid-hint { color: var(--muted); font-size: 0.9rem; margin: 4px 0 0; }
+.cell-card { margin-bottom: 12px; }
+.cell-card.empty .chord { color: var(--muted); font-size: 1rem; font-weight: 400; }
+
 .status { position: absolute; left: 12px; bottom: 12px; margin: 0; background: rgba(0, 0, 0, 0.75); padding: 6px 10px; border-radius: 8px; font-size: 0.9rem; }
 .status:empty { display: none; }
 .caption { color: var(--muted); font-size: 0.9rem; margin: 6px 0 0; }
@@ -78,7 +93,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 
 /* [F8] piano: purple = left half (low), green = right half (high)
    piano: roxo = metade esquerda (grave), verde = metade direita (aguda) */
-:root { --left-key: #a98bff; --right-key: #39cf9d; }
+:root { --left-key: #a98bff; --right-key: #39cf9d; --cursor-key: #ff7a59; }
 .piano-box { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .piano-box h2 { margin: 0 0 10px; font-size: 1rem; }
 .piano-wrap { overflow-x: auto; }
@@ -91,13 +106,16 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .piano .on-left rect { fill: var(--left-key); }
 .piano .on-right rect { fill: var(--right-key); }
 .piano .on-both rect { fill: #ffcc4d; }
-.piano .on-left text, .piano .on-right text, .piano .on-both text { fill: #0b1122; font-weight: 800; }
+/* [F13] selected square: drawn after the others so it wins / quadrado selecionado: vem por último, então vence */
+.piano .on-cursor rect { fill: var(--cursor-key); }
+.piano .on-left text, .piano .on-right text, .piano .on-both text, .piano .on-cursor text { fill: #0b1122; font-weight: 800; }
 .piano .hit rect { stroke: #fff; stroke-width: 3; }
 .piano-legend { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; }
 .piano-legend li { display: flex; align-items: center; gap: 8px; }
 .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
 .swatch.left { background: var(--left-key); }
 .swatch.right { background: var(--right-key); }
+.swatch.cursor { background: var(--cursor-key); }
 .piano-note { color: var(--muted); font-size: 0.85rem; margin: 6px 0 0; }
 
 .rules { margin-top: 18px; color: var(--muted); }

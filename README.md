@@ -1,10 +1,14 @@
 # Harmonia 🌍🎵
 
-Hear the colours of our planet. Harmonia turns a NASA satellite image (or any image you upload)
-into music. The image is split down the middle: the left half plays in your left ear and the right half in your right.
+Hear the colours of our planet. Harmonia turns a NASA satellite image (or any image you upload) into music.
 
-*Ouça as cores do nosso planeta. O Harmonia transforma uma imagem de satélite da NASA (ou qualquer imagem que você enviar)
-em música. A imagem é dividida ao meio: a metade esquerda toca no ouvido esquerdo e a direita, no direito.*
+- **Explore:** the image is a matrix of squares. Move the mouse over them, or use the arrow keys, and a synth plays each square's chord.
+- **Play:** hear the whole image. It is split down the middle: the left half plays in your left ear and the right half in your right.
+
+*Ouça as cores do nosso planeta. O Harmonia transforma uma imagem de satélite da NASA (ou qualquer imagem que você enviar) em música.*
+
+- ***Explorar:** a imagem é uma matriz de quadrados. Passe o mouse por eles, ou use as setas do teclado, e um sintetizador toca o acorde de cada quadrado.*
+- ***Tocar:** ouça a imagem inteira. Ela é dividida ao meio: a metade esquerda toca no ouvido esquerdo e a direita, no direito.*
 
 ## Mapping / Mapeamento
 
@@ -15,8 +19,13 @@ em música. A imagem é dividida ao meio: a metade esquerda toca no ouvido esque
 | Warm colours / Cores quentes | Major chord / Acorde maior |
 | Cold colours / Cores frias | Minor chord / Acorde menor |
 | Left / right half / Metade esquerda / direita | Left / right speaker / Caixa esquerda / direita |
+| Each square of the matrix / Cada quadrado da matriz | Its own chord, by the same rules / O seu próprio acorde, pelas mesmas regras |
 
 Details:
+- **Matrix:** 8 squares across; the number of rows (2 to 8) follows the image's shape so squares stay roughly square.
+  A square's column sets where it sits between the speakers (first column left, last column right). Squares in the left half of
+  the image play low (octaves 2–3), squares in the right half play high (octaves 4–5). The chord is strummed from its lowest note up.
+- **White, grey and black** areas (clouds, ice, dark sea) have almost no colour, so they count as neutral and harmonic: a plain C major chord.
 - **Octaves:** the left half plays low (octaves 2–3) and the right half high (octaves 4–5), so the two chords never overlap.
 - **Brightness** = average luminance → one octave up inside the half's range, plus a lowpass filter from ~500 Hz (dark) to ~11 kHz (bright).
   Very bright halves also add the root an octave up.
@@ -45,6 +54,7 @@ src/
   i18n.ts          all text, English + Portuguese       / todo o texto, inglês + português
   core/            pure logic, no browser APIs          / lógica pura, sem APIs do navegador
     analysis.ts      image -> chords                      / imagem -> acordes
+    grid.ts          image -> matrix of squares, arrows   / imagem -> matriz de quadrados, setas
     sequence.ts      which note plays when               / qual nota toca e quando
   audio/
     sonify.ts        Tone.js sound engine                 / motor de som Tone.js
@@ -52,12 +62,13 @@ src/
     scenes.ts        NASA images + GIBS URLs + captions   / imagens da NASA + URLs + legendas
     load-image.ts    download / open / draw an image      / baixar / abrir / desenhar imagem
   ui/
+    grid.ts          squares drawn over the image         / quadrados desenhados sobre a imagem
     piano.ts         piano keyboard (SVG)                 / teclado de piano (SVG)
     report.ts        meters + screen-reader sentences     / medidores + frases do leitor de tela
 ```
 
-Each module has a `*.test.ts` next to it (43 tests). Run them with `npm test`.
-*Cada módulo tem um `*.test.ts` ao lado (43 testes). Rode com `npm test`.*
+Each module has a `*.test.ts` next to it (69 tests). Run them with `npm test`.
+*Cada módulo tem um `*.test.ts` ao lado (69 testes). Rode com `npm test`.*
 
 Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) to find every part of that feature.
 *Cada funcionalidade tem uma etiqueta nos comentários do código. Busque a etiqueta (ex.: `[F2]`) para achar todas as partes.*
@@ -76,6 +87,7 @@ Every feature has a tag in the code comments. Search for the tag (e.g. `[F2]`) t
 | `[F10]` | Upload / drag-and-drop an image | Enviar / arrastar uma imagem | `data/load-image`, `main` |
 | `[F11]` | English / Portuguese switch | Troca inglês / português | `i18n`, `main` |
 | `[F12]` | Meters + screen-reader descriptions | Medidores + descrições para leitor de tela | `ui/report`, `i18n` |
+| `[F13]` | Image as a matrix: hear each square with the mouse or arrow keys | Imagem como matriz: ouvir cada quadrado com o mouse ou as setas | `core/grid`, `ui/grid`, `audio/sonify`, `main` |
 
 ## License
 Apache 2.0, see [LICENSE](LICENSE).

@@ -5,7 +5,8 @@
 // Um piano simples (C2 a C7) desenhado em SVG. As notas da metade esquerda e da direita
 // acendem em duas cores e com nome, para ver os dois acordes e a oitava de cada um.
 //   createPiano -> draws the keys once / desenha as teclas uma vez
-//   showChords  -> lights the chord notes [F5] / acende as notas dos acordes
+//   showChords  -> lights the chord notes [F5] and the selected square [F13]
+//                  acende as notas dos acordes e do quadrado selecionado
 //   pulseKey    -> flashes a key while it plays [F7] / pisca a tecla enquanto toca
 // =============================================================================
 
@@ -67,16 +68,21 @@ export function createPiano(container: HTMLElement): SVGSVGElement {
 }
 
 /** Lights the notes of the left chord and the right chord. */
-export function showChords(svg: SVGSVGElement, left: number[], right: number[], ariaLabel: string) {
-  const l = new Set(left), r = new Set(right);
+export function showChords(
+  svg: SVGSVGElement, left: number[], right: number[], ariaLabel: string, cursor: number[] = [],
+) {
+  const l = new Set(left), r = new Set(right), c = new Set(cursor);
   svg.querySelectorAll<SVGGElement>(".key").forEach((g) => {
     const m = Number(g.dataset.midi);
-    const inL = l.has(m), inR = r.has(m);
+    const inL = l.has(m), inR = r.has(m), inC = c.has(m);
     g.classList.toggle("on-left", inL && !inR);
     g.classList.toggle("on-right", inR && !inL);
     g.classList.toggle("on-both", inL && inR);
+    // [F13] notes of the square under the cursor (drawn on top of the other colours)
+    //       notas do quadrado sob o cursor (desenhadas por cima das outras cores)
+    g.classList.toggle("on-cursor", inC);
     const text = g.querySelector("text")!;
-    text.textContent = inL || inR ? noteName(m) : m % 12 === 0 ? noteName(m) : "";
+    text.textContent = inL || inR || inC ? noteName(m) : m % 12 === 0 ? noteName(m) : "";
   });
   svg.setAttribute("aria-label", ariaLabel);
 }

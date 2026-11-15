@@ -63,4 +63,28 @@ describe("mapping rules", () => {
     expect(buildChord(noisy).notes.length).toBeGreaterThan(5);
     expect(buildChord(noisy).dissonance).toBeGreaterThan(buildChord(flat).dissonance);
   });
+
+  it("treats white cloud with faint random tints as neutral and harmonic, not clashing", () => {
+    // near-white pixels whose tiny tint flips between bluish and yellowish, like JPEG noise
+    const cloud = analyzeRegion(
+      image(10, 10, (x, y) => ((x + y) % 2 ? [250, 250, 246] : [246, 248, 252])), 10, 10, 0, 10, 1,
+    );
+    expect(cloud.hue).toBeNull();
+    expect(cloud.warmth).toBe(0);
+    expect(cloud.similarity).toBe(1);
+    const chord = buildChord(cloud);
+    expect(chord.notes.map((n) => n % 12)).toEqual([0, 4, 7, 0]); // plain C major, plus the bright octave
+    expect(chord.name).toBe("C");
+  });
+
+  it("fades clashing in gradually as a region gets more colourful", () => {
+    const mixed = (strength: number) =>
+      analyzeRegion(
+        image(10, 10, (x, y) => ((x + y) % 2 ? [128 + strength, 128 + strength, 128 - strength] : [128 - strength, 128 - strength, 128 + strength])),
+        10, 10, 0, 10, 1,
+      ).similarity;
+    expect(mixed(4)).toBe(1); // nearly grey
+    expect(mixed(8)).toBeLessThan(1);
+    expect(mixed(8)).toBeGreaterThan(mixed(60)); // strongly coloured opposites clash most
+  });
 });

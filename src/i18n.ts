@@ -33,6 +33,13 @@ export interface Strings {
   }) => string;
   halves: (left: string, right: string) => string;
   pianoLabel: (left: string, right: string) => string;
+  // [F13] matrix of squares / matriz de quadrados
+  gridLabel: (cols: number, rows: number) => string;
+  cellPosition: (row: number, col: number) => string;
+  /** shown under the image before / after sound is on */
+  gridHintSoundOff: string;
+  gridHintSoundOn: string;
+  cellNone: string;
   switched: string;
 }
 
@@ -41,7 +48,7 @@ export const STRINGS: Record<Lang, Strings> = {
     htmlLang: "en",
     dateLocale: "en-GB",
     page: {
-      tagline: "Hear the colours of our planet. The image is split down the middle: the left half plays in your left ear, the right half in your right.",
+      tagline: "Hear the colours of our planet. Move over the squares of the image to hear each part, or press Play to hear the whole image: the left half plays in your left ear, the right half in your right.",
       upload: "Upload an image",
       scenesHeading: "NASA satellite images",
       leftHalf: "Left half",
@@ -59,6 +66,9 @@ export const STRINGS: Record<Lang, Strings> = {
       pianoLeft: "Left half: low (octaves 2–3)",
       pianoRight: "Right half: high (octaves 4–5)",
       pianoNote: "A brighter half moves up one octave. During playback, each key lights up as it is played.",
+      pianoCursor: "Selected square",
+      cellHeading: "Selected square",
+      rule5: "<b>Squares</b> → the image is a matrix of squares, and each square gets its own chord by the same rules. Move the mouse over them, or use the arrow keys.",
     },
     play: "Play",
     stop: "Stop",
@@ -82,13 +92,19 @@ export const STRINGS: Record<Lang, Strings> = {
       `Colours ${["very varied", "fairly mixed", "close together"][similar]}, so ${["clashing", "rich", "harmonic"][similar]} sound.`,
     halves: (l, r) => `Left half: ${l} Right half: ${r}`,
     pianoLabel: (l, r) => `Piano. Left half, low: ${l}. Right half, high: ${r}.`,
+    gridLabel: (cols, rows) =>
+      `The image as a matrix of ${rows} rows and ${cols} columns. Use the arrow keys to move between squares and hear each one.`,
+    cellPosition: (row, col) => `Row ${row}, column ${col}`,
+    gridHintSoundOff: "Click a square, or press Tab and then the arrow keys, to turn on the sound and explore the image.",
+    gridHintSoundOn: "Move the mouse over the squares, or use the arrow keys, to hear each part of the image.",
+    cellNone: "No square selected yet.",
     switched: "Language: English.",
   },
   pt: {
     htmlLang: "pt-BR",
     dateLocale: "pt-BR",
     page: {
-      tagline: "Ouça as cores do nosso planeta. A imagem é dividida ao meio: a metade esquerda toca no ouvido esquerdo e a direita, no direito.",
+      tagline: "Ouça as cores do nosso planeta. Passe pelos quadrados da imagem para ouvir cada parte, ou aperte Tocar para ouvir a imagem inteira: a metade esquerda toca no ouvido esquerdo e a direita, no direito.",
       upload: "Enviar uma imagem",
       scenesHeading: "Imagens de satélite da NASA",
       leftHalf: "Metade esquerda",
@@ -106,6 +122,9 @@ export const STRINGS: Record<Lang, Strings> = {
       pianoLeft: "Metade esquerda: grave (oitavas 2–3)",
       pianoRight: "Metade direita: aguda (oitavas 4–5)",
       pianoNote: "Uma metade mais clara sobe uma oitava. Durante a música, cada tecla acende quando é tocada.",
+      pianoCursor: "Quadrado selecionado",
+      cellHeading: "Quadrado selecionado",
+      rule5: "<b>Quadrados</b> → a imagem é uma matriz de quadrados, e cada quadrado ganha o seu próprio acorde pelas mesmas regras. Passe o mouse por eles ou use as setas do teclado.",
     },
     play: "Tocar",
     stop: "Parar",
@@ -129,6 +148,12 @@ export const STRINGS: Record<Lang, Strings> = {
       `Cores ${["muito variadas", "um pouco misturadas", "próximas"][similar]}, então som ${["dissonante", "rico", "harmônico"][similar]}.`,
     halves: (l, r) => `Metade esquerda: ${l} Metade direita: ${r}`,
     pianoLabel: (l, r) => `Piano. Metade esquerda, grave: ${l}. Metade direita, aguda: ${r}.`,
+    gridLabel: (cols, rows) =>
+      `A imagem como uma matriz de ${rows} linhas e ${cols} colunas. Use as setas do teclado para andar pelos quadrados e ouvir cada um.`,
+    cellPosition: (row, col) => `Linha ${row}, coluna ${col}`,
+    gridHintSoundOff: "Clique em um quadrado, ou aperte Tab e depois as setas, para ligar o som e explorar a imagem.",
+    gridHintSoundOn: "Passe o mouse pelos quadrados, ou use as setas do teclado, para ouvir cada parte da imagem.",
+    cellNone: "Nenhum quadrado selecionado ainda.",
     switched: "Idioma: português.",
   },
 };

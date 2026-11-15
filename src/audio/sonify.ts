@@ -8,6 +8,7 @@
 //   [F2] Mixed colours -> slight detune            / Cores misturadas -> leve desafinação
 //   [F4] Left half -> left speaker, right -> right / Metade esquerda -> caixa esquerda, direita -> direita
 //   [F7] Play / stop loop (pad + arpeggio)         / Tocar / parar (acorde de fundo + arpejo)
+//   [F13] One square of the matrix (strummed chord) / Um quadrado da matriz (acorde dedilhado)
 // =============================================================================
 import * as Tone from "tone";
 import type { Chord } from "../core/analysis";
@@ -18,18 +19,22 @@ export const midiToFreq = (m: number) => 440 * 2 ** ((m - 69) / 12);
 /** How far each half is panned (-1 = left, +1 = right). / Quanto cada metade vai para o lado. */
 export const PAN = { left: -0.85, right: 0.85 } as const;
 
+/** [F13] Seconds between the notes of a strummed square. / Segundos entre as notas de um quadrado. */
+export const STRUM_GAP = 0.06;
+
 /** One half of the image = one voice. / Uma metade da imagem = uma voz. */
 class Voice {
   readonly pad: Tone.PolySynth;
   readonly arp: Tone.PolySynth;
   readonly filter: Tone.Filter;
+  readonly panner: Tone.Panner;
   chord: Chord | null = null;
 
   constructor(pan: number, out: Tone.ToneAudioNode) {
     // [F4] stereo position / posição no estéreo
-    const panner = new Tone.Panner(pan).connect(out);
+    this.panner = new Tone.Panner(pan).connect(out);
     // [F1] lowpass filter: opened wider for brighter images / filtro passa-baixa: mais aberto se mais brilho
-    this.filter = new Tone.Filter(2000, "lowpass").connect(panner);
+    this.filter = new Tone.Filter(2000, "lowpass").connect(this.panner);
     this.pad = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "fattriangle", count: 3, spread: 10 },
       envelope: { attack: 0.6, decay: 0.4, sustain: 0.7, release: 1.6 },
@@ -42,10 +47,10 @@ class Voice {
     }).connect(this.filter);
   }
 
-  set(chord: Chord) {
+  set(chord: Chord, ramp = 0.3) {
     this.chord = chord;
     // [F1] brighter image -> more treble / imagem mais brilhante -> mais agudos
-    this.filter.frequency.rampTo(chord.cutoff, 0.3);
+    this.filter.frequency.rampTo(chord.cutoff, ramp);
     // [F2] varied colours -> slightly out of tune / cores variadas -> um pouco desafinado
     const detune = chord.dissonance * 30;
     this.pad.set({ detune });
@@ -56,25 +61,57 @@ class Voice {
 // [F7] The player  ·  O tocador
 export class Harmonia {
   private voices?: Record<Side, Voice>;
+  /** [F13] the voice that plays the square under the cursor / a voz que toca o quadrado sob o cursor */
+  private cursor?: Voice;
   private loop?: Tone.Loop;
   private step = 0;
   private pending?: { left: Chord; right: Chord };
+  private starting?: Promise<void>;
   /** Called on each note played, for visuals. / Chamado a cada nota tocada, para o visual. */
   onStep?: (side: Side, time: number, midi: number) => void;
 
-  // Browsers only allow audio after a click, so this runs on the first Play.
-  // Navegadores só liberam áudio depois de um clique, então isto roda no primeiro "Tocar".
-  async start() {
-    if (this.voices) return;
+  /** True once audio is running. / Verdadeiro quando o áudio já está ligado. */
+  get started() {
+    return this.voices !== undefined;
+  }
+
+  // Browsers only allow audio after a click or key press, so this runs on the first one.
+  // Navegadores só liberam áudio depois de um clique ou tecla, então isto roda no primeiro.
+  // Calling it twice at once is safe: both callers wait for the same setup.
+  start(): Promise<void> {
+    this.starting ??= this.setUp();
+    return this.starting;
+  }
+
+  private async setUp() {
     await Tone.start();
     const master = new Tone.Volume(-4).toDestination();
     const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.3 }).connect(master);
     await reverb.ready;
     // [F4] left half almost fully left, right half almost fully right
     this.voices = { left: new Voice(PAN.left, reverb), right: new Voice(PAN.right, reverb) };
+    this.cursor = new Voice(0, reverb);
     Tone.getTransport().bpm.value = 84;
     this.loop = new Tone.Loop((time) => this.tick(time), "8n");
     if (this.pending) this.setChords(this.pending.left, this.pending.right);
+  }
+
+  /**
+   * [F13] Plays one square of the matrix: its chord, strummed from the lowest note up,
+   * at the square's position between the speakers. Does nothing until audio has started.
+   * Toca um quadrado da matriz: o acorde, dedilhado da nota mais grave para cima,
+   * na posição do quadrado entre as caixas. Não faz nada antes de o áudio ligar.
+   */
+  playCell(chord: Chord, pan: number) {
+    const v = this.cursor;
+    if (!v) return;
+    const now = Tone.now();
+    v.arp.releaseAll(now); // cut the previous square so squares don't blur together
+    v.set(chord, 0.03); // [F1] brightness -> filter, [F2] mixed colours -> detune
+    v.panner.pan.rampTo(pan, 0.03); // [F4] column -> left .. right
+    chord.notes.forEach((midi, i) => {
+      v.arp.triggerAttackRelease(midiToFreq(midi), 0.6, now + 0.04 + i * STRUM_GAP, 0.75);
+    });
   }
 
   /** Safe to call before start(): chords are kept until audio is ready. / Pode chamar antes do start(). */

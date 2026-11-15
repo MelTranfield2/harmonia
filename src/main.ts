@@ -24,13 +24,17 @@
 //   [F10] Upload / drag-and-drop an image      Enviar / arrastar uma imagem              data/load-image, main
 //   [F11] English / Portuguese switch          Troca inglês / português                  i18n, main
 //   [F12] Meters + screen-reader descriptions  Medidores + descrições p/ leitor de tela  ui/report
+//   [F13] Image as a matrix: hear each square  Imagem como matriz: ouvir cada quadrado   core/grid, ui/grid, audio/sonify
+//         with the mouse or the arrow keys     com o mouse ou as setas do teclado
 // =============================================================================
 import "./style.css";
 import { Harmonia } from "./audio/sonify";
 import { analyzeHalves, buildChord, type Chord, type RegionAnalysis } from "./core/analysis";
+import { analyzeGrid, gridSize, moveCell, NAV_KEYS, type Cell, type GridSize } from "./core/grid";
 import { drawImage, loadImageFromFile, loadImageFromUrl } from "./data/load-image";
 import { SCENES, sceneCaption, sceneUrl } from "./data/scenes";
 import { initialLang, saveLang, SCENE_TEXT, STRINGS, type Lang } from "./i18n";
+import { cellElement, cellIndexOf, renderGrid, setActiveCell, setGridLabels } from "./ui/grid";
 import { createPiano, noteName, pulseKey, showChords } from "./ui/piano";
 import { chordHtml, describeHalf, meterHtml, meters } from "./ui/report";
 
@@ -46,6 +50,12 @@ const el = {
   drop: $("drop"),
   scenes: $("scenes"),
   piano: $("piano"),
+  grid: $("grid"),
+  gridHint: $("grid-hint"),
+  cellCard: $("cell-h").parentElement as HTMLElement,
+  cellPos: $("cell-pos"),
+  cellChord: $("cell-chord"),
+  cellMeters: $("cell-meters"),
 };
 
 // ---------- state / estado ----------
@@ -62,6 +72,12 @@ const state = {
   status: null as Status | null,
   halves: null as Record<"left" | "right", RegionAnalysis> | null,
   chords: null as Record<"left" | "right", Chord> | null,
+  /** [F13] the image as a matrix of squares / a imagem como matriz de quadrados */
+  grid: null as { size: GridSize; cells: Cell[] } | null,
+  /** [F13] the selected square (mouse or arrow keys) / o quadrado selecionado */
+  activeCell: null as number | null,
+  /** [F13] the square the mouse is over, so moving inside one square doesn't replay it */
+  hoverCell: null as number | null,
   /** bumps on every new image, so a slow download can't replace a newer pick */
   loadToken: 0,
 };
@@ -113,12 +129,42 @@ function renderHalves() {
   }
 }
 
-// [F8] light both chords on the piano / acende os dois acordes no piano
+// [F8] light both chords on the piano, plus the selected square [F13]
+//      acende os dois acordes no piano, mais o quadrado selecionado
 function renderPiano() {
   const { chords } = state;
   if (!chords) return;
   const label = (c: Chord) => `${c.name} (${c.notes.map(noteName).join(" ")})`;
-  showChords(piano, chords.left.notes, chords.right.notes, T().pianoLabel(label(chords.left), label(chords.right)));
+  showChords(
+    piano, chords.left.notes, chords.right.notes,
+    T().pianoLabel(label(chords.left), label(chords.right)),
+    activeCell()?.chord.notes ?? [],
+  );
+}
+
+// ---------- [F13] matrix of squares / matriz de quadrados ----------
+const activeCell = (): Cell | null =>
+  state.grid && state.activeCell !== null ? state.grid.cells[state.activeCell] : null;
+
+/** What a screen reader reads for one square. / O que o leitor de tela lê para um quadrado. */
+const cellLabel = (c: Cell) => `${T().cellPosition(c.row + 1, c.col + 1)}. ${describeHalf(T(), c.analysis, c.chord)}`;
+
+function renderGridLabels() {
+  const g = state.grid;
+  if (g) setGridLabels(el.grid, g.cells.map(cellLabel), T().gridLabel(g.size.cols, g.size.rows));
+}
+
+function renderGridHint() {
+  el.gridHint.textContent = engine.started ? T().gridHintSoundOn : T().gridHintSoundOff;
+}
+
+// Card with the selected square's chord and meters / cartão com o acorde e os medidores do quadrado
+function renderCell() {
+  const c = activeCell();
+  el.cellCard.classList.toggle("empty", !c);
+  el.cellPos.textContent = c ? T().cellPosition(c.row + 1, c.col + 1) : "";
+  el.cellChord.innerHTML = c ? chordHtml(T(), c.chord) : T().cellNone;
+  el.cellMeters.innerHTML = c ? meters(T(), c.analysis, c.chord).map(meterHtml).join("") : "";
 }
 
 // [F11] every piece of text in the chosen language / todo o texto no idioma escolhido
@@ -138,6 +184,9 @@ function renderAll() {
   renderCaption();
   renderStatus();
   renderHalves();
+  renderGridLabels();
+  renderGridHint();
+  renderCell();
   renderPiano();
 }
 
@@ -157,8 +206,17 @@ function useImage(img: ImageBitmap, source: Source) {
   state.halves = halves;
   state.chords = chords;
   engine.setChords(chords.left, chords.right);
+  // [F13] the image as a matrix: every square gets its own analysis and chord
+  //       a imagem como matriz: cada quadrado ganha a sua análise e o seu acorde
+  const size = gridSize(pixels.width, pixels.height);
+  const cells = analyzeGrid(pixels.data, pixels.width, pixels.height, size);
+  state.grid = { size, cells };
+  state.activeCell = null;
+  state.hoverCell = null;
+  renderGrid(el.grid, size, cells.map(cellLabel), T().gridLabel(size.cols, size.rows));
   renderCaption();
   renderHalves();
+  renderCell();
   renderPiano();
   announce(T().halves(describeHalf(T(), halves.left, chords.left), describeHalf(T(), halves.right, chords.right)));
 }
@@ -194,13 +252,34 @@ async function showFile(file: File) {
   }
 }
 
+// [F13] select a square: show it, light its notes on the piano, and play it
+//       seleciona um quadrado: mostra, acende as notas no piano e toca
+function selectCell(index: number, opts: { play: boolean }) {
+  const cell = state.grid?.cells[index];
+  if (!cell) return;
+  if (state.activeCell !== index) {
+    state.activeCell = index;
+    setActiveCell(el.grid, index);
+    renderCell();
+    renderPiano();
+  }
+  if (opts.play) engine.playCell(cell.chord, cell.pan); // silent until the sound is on
+}
+
+/** Browsers need a click or key press before sound; this turns it on. / Liga o som (precisa de clique ou tecla). */
+async function ensureSound() {
+  if (engine.started) return;
+  await engine.start();
+  renderGridHint();
+}
+
 // [F7] play / stop / tocar / parar
 async function togglePlay() {
   if (state.playing) {
     engine.stop();
     state.playing = false;
   } else {
-    await engine.start();
+    await ensureSound();
     engine.play();
     state.playing = true;
   }
@@ -231,6 +310,48 @@ el.play.addEventListener("click", () => void togglePlay());
 document.querySelectorAll<HTMLElement>("[data-lang]").forEach((b) =>
   b.addEventListener("click", () => setLanguage(b.dataset.lang as Lang)),
 );
+
+// [F13] mouse: moving onto a new square plays it / mouse: entrar em um quadrado novo toca ele
+el.grid.addEventListener("pointermove", (e) => {
+  // elementFromPoint also works for touch, where the event target stays on the first square
+  const index = cellIndexOf(document.elementFromPoint(e.clientX, e.clientY));
+  if (index === null || index === state.hoverCell) return;
+  state.hoverCell = index;
+  selectCell(index, { play: true });
+});
+el.grid.addEventListener("pointerleave", () => (state.hoverCell = null));
+
+// [F13] click / tap: turns the sound on the first time, then plays the square
+//       clique / toque: liga o som na primeira vez e toca o quadrado
+el.grid.addEventListener("pointerdown", async (e) => {
+  const index = cellIndexOf(e.target);
+  if (index === null) return;
+  state.hoverCell = index;
+  await ensureSound();
+  selectCell(index, { play: true });
+});
+
+// [F13] arrow keys move between squares; Enter / Space plays the square again
+//       as setas andam pelos quadrados; Enter / Espaço toca o quadrado de novo
+el.grid.addEventListener("keydown", async (e) => {
+  const g = state.grid;
+  const current = cellIndexOf(e.target);
+  if (!g || current === null) return;
+  const replay = e.key === "Enter" || e.key === " ";
+  if (!NAV_KEYS.has(e.key) && !replay) return;
+  e.preventDefault();
+  e.stopPropagation(); // so Space here doesn't also press Play
+  const next = replay ? current : moveCell(current, e.key, g.size);
+  await ensureSound();
+  selectCell(next, { play: true });
+  cellElement(el.grid, next)?.focus();
+});
+
+// [F13] Tab into the matrix: show that square without playing it
+el.grid.addEventListener("focusin", (e) => {
+  const index = cellIndexOf(e.target);
+  if (index !== null) selectCell(index, { play: false });
+});
 
 // [F10] upload button and drag-and-drop / botão de enviar e arrastar-e-soltar
 el.file.addEventListener("change", () => {

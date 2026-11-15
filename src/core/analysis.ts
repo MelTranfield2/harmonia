@@ -71,14 +71,34 @@ export function hueTemperature(hue: number): number {
   return -0.3; // violet 280..320
 }
 
-/** Analyse the pixels between columns x0 (inclusive) and x1 (exclusive). Samples every `stride` pixels. */
+/** Average chroma (0..1) at or below which a region counts as grey. / Croma médio até o qual a região conta como cinza. */
+export const GREY_CHROMA = 0.04;
+
+/** A rectangle of pixels: x0/y0 inclusive, x1/y1 exclusive. / Um retângulo de pixels. */
+export interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+/** Analyse the pixels between columns x0 (inclusive) and x1 (exclusive), full height. */
 export function analyzeRegion(
   data: Uint8ClampedArray, width: number, height: number, x0: number, x1: number, stride = 2,
 ): RegionAnalysis {
+  return analyzeRect(data, width, { x0, y0: 0, x1, y1: height }, stride);
+}
+
+/**
+ * Analyse any rectangle of the image (a half, or one square of the matrix [F13]).
+ * Samples every `stride` pixels.
+ * Analisa qualquer retângulo da imagem (uma metade, ou um quadrado da matriz [F13]).
+ */
+export function analyzeRect(data: Uint8ClampedArray, width: number, rect: Rect, stride = 2): RegionAnalysis {
   let n = 0, lum = 0, warm = 0, cold = 0;
   let hx = 0, hy = 0, chromaSum = 0;
-  for (let y = 0; y < height; y += stride) {
-    for (let x = x0; x < x1; x += stride) {
+  for (let y = rect.y0; y < rect.y1; y += stride) {
+    for (let x = rect.x0; x < rect.x1; x += stride) {
       const o = (y * width + x) * 4;
       if (data[o + 3] < 128) continue;
       const r = data[o], g = data[o + 1], b = data[o + 2];
@@ -99,8 +119,13 @@ export function analyzeRegion(
   }
   if (n === 0) return { brightness: 0, warmth: 0, similarity: 1, hue: null };
   const meanChroma = chromaSum / n;
+  // Almost grey (white cloud, ice, black sea at night)? Then its faint tints are just image
+  // noise: treat it as having no hue, neutral temperature and colours that are all close.
+  // Quase cinza (nuvem branca, gelo, mar escuro)? Então os tons fracos são só ruído da imagem:
+  // tratar como sem matiz, temperatura neutra e cores todas próximas.
+  const grey = meanChroma <= GREY_CHROMA;
   let hue: number | null = null;
-  if (meanChroma > 0.04) hue = ((Math.atan2(hy, hx) * 180) / Math.PI + 360) % 360;
+  if (!grey) hue = ((Math.atan2(hy, hx) * 180) / Math.PI + 360) % 360;
   // [F2] How close the colours are: 1 when every coloured pixel shares one hue, 0 when hues point
   // all around the colour wheel. Greys/whites barely count (they have almost no hue), so
   // clouds over the sea do not make the sea "clash" - only genuinely different colours do.
@@ -108,10 +133,14 @@ export function analyzeRegion(
   // os matizes apontam para todo o círculo de cores. Cinza/branco quase não contam, então nuvens
   // sobre o mar não deixam o mar "dissonante" - só cores realmente diferentes.
   const concentration = chromaSum > 1e-6 ? Math.hypot(hx, hy) / chromaSum : 1;
+  const hueSimilarity = Math.min(1, Math.max(0, (concentration - 0.3) / 0.65));
+  // The less colourful the region, the less its hues can "clash": fade towards 1 (all close).
+  // Quanto menos colorida a região, menos os matizes podem "brigar": tende a 1 (tudo próximo).
+  const colourfulness = Math.min(1, meanChroma / (2 * GREY_CHROMA));
   return {
     brightness: lum / n, // [F1]
-    warmth: warm + cold > 1e-6 ? (warm - cold) / (warm + cold) : 0, // [F3]
-    similarity: Math.min(1, Math.max(0, (concentration - 0.3) / 0.65)), // [F2]
+    warmth: grey || warm + cold <= 1e-6 ? 0 : (warm - cold) / (warm + cold), // [F3]
+    similarity: grey ? 1 : 1 - (1 - hueSimilarity) * colourfulness, // [F2]
     hue, // [F6]
   };
 }

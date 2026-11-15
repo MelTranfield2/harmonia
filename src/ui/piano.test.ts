@@ -54,6 +54,23 @@ describe("[F8] piano", () => {
     expect(key(svg, 48).querySelector("text")!.textContent).toBe("C3");
   });
 
+  it("[F13] lights the selected square's notes, and clears them afterwards", () => {
+    showChords(svg, [57, 60, 64], [67, 71, 74], "", [62, 65, 69]);
+    expect(key(svg, 62).classList.contains("on-cursor")).toBe(true);
+    expect(key(svg, 62).querySelector("text")!.textContent).toBe("D4");
+    expect(key(svg, 57).classList.contains("on-cursor")).toBe(false);
+
+    showChords(svg, [57, 60, 64], [67, 71, 74], "");
+    expect(key(svg, 62).classList.contains("on-cursor")).toBe(false);
+    expect(key(svg, 62).querySelector("text")!.textContent).toBe("");
+  });
+
+  it("[F13] can light a note that is also in a half's chord", () => {
+    showChords(svg, [57], [71], "", [57]);
+    expect(key(svg, 57).classList.contains("on-cursor")).toBe(true);
+    expect(key(svg, 57).classList.contains("on-left")).toBe(true);
+  });
+
   it("[F7] flashes a key while it plays", () => {
     vi.useFakeTimers();
     pulseKey(svg, 60);

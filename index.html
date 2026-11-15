@@ -30,9 +30,13 @@
         <div id="flash-left" class="flash left" aria-hidden="true"></div>
         <div id="flash-right" class="flash right" aria-hidden="true"></div>
         <div class="divider" aria-hidden="true"></div>
+        <!-- [F13] Matrix of squares over the image (filled in by ui/grid.ts) -->
+        <!-- Matriz de quadrados sobre a imagem (preenchida por ui/grid.ts) -->
+        <div id="grid" class="grid"></div>
         <p id="status" class="status" role="status"></p>
       </div>
       <p id="caption" class="caption"></p>
+      <p id="grid-hint" class="grid-hint"></p>
 
       <!-- [F7] Play / stop + [F10] upload / Tocar / parar + enviar imagem -->
       <div class="controls">
@@ -47,6 +51,13 @@
       <section class="picker" aria-labelledby="scenes-h">
         <h2 id="scenes-h" data-i18n="scenesHeading">NASA satellite images</h2>
         <div id="scenes" class="scenes"></div>
+      </section>
+
+      <!-- [F13] Chord + meters of the selected square / Acorde + medidores do quadrado selecionado -->
+      <section class="half cell-card" aria-labelledby="cell-h">
+        <h2 id="cell-h"><span data-i18n="cellHeading">Selected square</span> <span class="ear" id="cell-pos"></span></h2>
+        <p class="chord" id="cell-chord">–</p>
+        <div id="cell-meters"></div>
       </section>
 
       <!-- [F12] Chord + meters for each half ([F1] [F2] [F3]) / Acorde + medidores de cada metade -->
@@ -70,11 +81,12 @@
         <ul class="piano-legend">
           <li><span class="swatch left" aria-hidden="true"></span><span data-i18n="pianoLeft">Left half: low (octaves 2–3)</span></li>
           <li><span class="swatch right" aria-hidden="true"></span><span data-i18n="pianoRight">Right half: high (octaves 4–5)</span></li>
+          <li><span class="swatch cursor" aria-hidden="true"></span><span data-i18n="pianoCursor">Selected square</span></li>
         </ul>
         <p class="piano-note" data-i18n="pianoNote"></p>
       </section>
 
-      <!-- The 4 mapping rules explained / As 4 regras de mapeamento explicadas -->
+      <!-- The mapping rules explained / As regras de mapeamento explicadas -->
       <section class="rules" aria-labelledby="rules-h">
         <h2 id="rules-h" data-i18n="rulesHeading">How the image becomes sound</h2>
         <ul>
@@ -82,6 +94,7 @@
           <li data-i18n-html="rule2"></li>
           <li data-i18n-html="rule3"></li>
           <li data-i18n-html="rule4"></li>
+          <li data-i18n-html="rule5"></li>
         </ul>
       </section>
 
